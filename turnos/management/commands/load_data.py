@@ -4,7 +4,7 @@ Uso: python manage.py load_data
 """
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from turnos.models import Barbero, Servicio, Turno, EstadoTurno
+from turnos.models import Barbero, Servicio, Turno, EstadoTurno, HorarioAtencion
 from datetime import date, time, timedelta
 
 
@@ -61,6 +61,49 @@ class Command(BaseCommand):
             }
         )
         self.stdout.write(f"  {'✓ Creado' if created else '→ Ya existe'}: {barbero3.nombre}")
+        
+        # CREAR HORARIOS DE ATENCIÓN
+        self.stdout.write('\n🕐 Creando horarios de atención...')
+        
+        # Horarios para cada barbero (Lunes a Viernes: 9-13 y 16-21, Sábado: 9-15)
+        barberos = [barbero1, barbero2, barbero3]
+        horarios_creados = 0
+        
+        for barbero in barberos:
+            # Lunes a Viernes (0-4): 09:00-21:00 con descanso 13:00-16:00
+            for dia in range(5):  # 0=Lunes, 4=Viernes
+                horario, created = HorarioAtencion.objects.get_or_create(
+                    barbero=barbero,
+                    dia_semana=dia,
+                    defaults={
+                        'hora_inicio': time(9, 0),
+                        'hora_fin': time(21, 0),
+                        'descanso_inicio': time(13, 0),
+                        'descanso_fin': time(16, 0)
+                    }
+                )
+                if created:
+                    horarios_creados += 1
+                    self.stdout.write(f"  ✓ {barbero.nombre.split()[0]} - {horario.get_dia_semana_display()}: 09:00-13:00 y 16:00-21:00")
+            
+            # Sábado (5): 09:00-15:00 sin descanso
+            horario, created = HorarioAtencion.objects.get_or_create(
+                barbero=barbero,
+                dia_semana=5,
+                defaults={
+                    'hora_inicio': time(9, 0),
+                    'hora_fin': time(15, 0),
+                    'descanso_inicio': None,
+                    'descanso_fin': None
+                }
+            )
+            if created:
+                horarios_creados += 1
+                self.stdout.write(f"  ✓ {barbero.nombre.split()[0]} - Sábado: 09:00-15:00")
+            
+            # Domingo (6): Franco (no se crea horario)
+        
+        self.stdout.write(f"  → Total horarios creados: {horarios_creados}")
         
         # CREAR SERVICIOS
         self.stdout.write('\n💈 Creando servicios...')
@@ -257,6 +300,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('📊 RESUMEN DE DATOS'))
         self.stdout.write('='*60)
         self.stdout.write(f"  • Barberos: {Barbero.objects.count()}")
+        self.stdout.write(f"  • Horarios de atención: {HorarioAtencion.objects.count()}")
         self.stdout.write(f"  • Servicios: {Servicio.objects.count()}")
         self.stdout.write(f"  • Turnos totales: {Turno.objects.count()}")
         self.stdout.write(f"  • Turnos pendientes: {Turno.objects.filter(estado=EstadoTurno.PENDIENTE).count()}")

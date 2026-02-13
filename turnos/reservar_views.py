@@ -23,6 +23,7 @@ class ReservarTurnoView(APIView):
     }
     """
     permission_classes = [AllowAny]
+    authentication_classes = []  # Desactiva autenticación de sesión para evitar CSRF
     
     def post(self, request):
         """Crear una nueva reserva de turno"""

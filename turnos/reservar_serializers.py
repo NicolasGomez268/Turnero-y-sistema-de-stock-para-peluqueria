@@ -39,14 +39,22 @@ class ReservarTurnoSerializer(serializers.ModelSerializer):
     
     def validate(self, data):
         """Validar que el horario esté disponible"""
+        from datetime import datetime
+        
         fecha = data.get('fecha')
         hora = data.get('hora')
         barbero = data.get('barbero')
         
+        # Convertir hora string a objeto time si es necesario
+        if isinstance(hora, str):
+            hora_obj = datetime.strptime(hora, '%H:%M:%S').time()
+        else:
+            hora_obj = hora
+        
         # Verificar si ya existe un turno en ese horario
         conflicto = Turno.objects.filter(
             fecha=fecha,
-            hora=hora,
+            hora=hora_obj,
             barbero=barbero,
             estado__in=['PENDIENTE', 'CONFIRMADO']
         ).exists()

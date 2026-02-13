@@ -1,5 +1,22 @@
 from django.contrib import admin
-from .models import Barbero, Servicio, Turno, EstadoTurno
+from django.shortcuts import render
+from django.urls import path
+from django.db.models import Sum, Count, Q
+from django.utils.html import format_html
+from datetime import datetime, timedelta
+from decimal import Decimal
+from .models import Barbero, Servicio, Turno, EstadoTurno, HorarioAtencion, DiaSemana
+
+
+class HorarioAtencionInline(admin.TabularInline):
+    """
+    Inline para editar horarios de atención directamente desde el Barbero.
+    """
+    model = HorarioAtencion
+    extra = 1
+    fields = ['dia_semana', 'hora_inicio', 'hora_fin', 'descanso_inicio', 'descanso_fin']
+    verbose_name = 'Horario de atención'
+    verbose_name_plural = 'Horarios de atención'
 
 
 @admin.register(Barbero)
@@ -18,6 +35,7 @@ class BarberoAdmin(admin.ModelAdmin):
     list_filter = ['is_active', 'fecha_ingreso']
     search_fields = ['nombre', 'telefono']
     readonly_fields = ['fecha_ingreso']
+    inlines = [HorarioAtencionInline]
     
     fieldsets = (
         ('Información Personal', {
@@ -170,6 +188,105 @@ class TurnoAdmin(admin.ModelAdmin):
         updated = queryset.update(estado=EstadoTurno.CANCELADO)
         self.message_user(request, f'{updated} turno(s) marcado(s) como CANCELADO.')
     marcar_cancelado.short_description = '✗ Marcar como CANCELADO'
+
+
+# ==================================================================================
+# VISTA PERSONALIZADA: REPORTE DE LIQUIDACIÓN SEMANAL
+# ==================================================================================
+
+class LiquidacionAdminView:
+    """
+    Vista personalizada para generar reportes de liquidación de barberos.
+    Permite seleccionar rango de fechas y calcular pagos.
+    """
+    
+    def get_urls(self):
+        """Agrega URL personalizada al admin"""
+        urls = super().get_urls()
+        custom_urls = [
+            path('liquidacion/', self.admin_site.admin_view(self.reporte_liquidacion), name='turnos_liquidacion'),
+        ]
+        return custom_urls + urls
+    
+    def reporte_liquidacion(self, request):
+        """Vista del reporte de liquidación"""
+        # Obtener parámetros de fecha del request
+        fecha_inicio_str = request.GET.get('fecha_inicio')
+        fecha_fin_str = request.GET.get('fecha_fin')
+        
+        # Valores por defecto: última semana
+        if not fecha_inicio_str or not fecha_fin_str:
+            hoy = datetime.now().date()
+            # Lunes de la semana actual
+            dias_desde_lunes = hoy.weekday()
+            fecha_inicio = hoy - timedelta(days=dias_desde_lunes + 7)  # Lunes semana pasada
+            fecha_fin = fecha_inicio + timedelta(days=6)  # Domingo semana pasada
+        else:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
+            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
+        
+        # Obtener todos los barberos activos
+        barberos = Barbero.objects.filter(is_active=True)
+        
+        # Calcular liquidación para cada barbero
+        reporte = []
+        total_general = Decimal('0')
+        total_turnos = 0
+        total_a_pagar = Decimal('0')
+        
+        for barbero in barberos:
+            # Filtrar turnos REALIZADOS en el rango de fechas
+            turnos = Turno.objects.filter(
+                barbero=barbero,
+                fecha__gte=fecha_inicio,
+                fecha__lte=fecha_fin,
+                estado=EstadoTurno.REALIZADO
+            ).select_related('servicio')
+            
+            # Calcular totales
+            cantidad_turnos = turnos.count()
+            total_bruto = sum(turno.precio_total for turno in turnos) if cantidad_turnos > 0 else Decimal('0')
+            
+            # Calcular comisión (60% para el barbero, 40% para la casa)
+            comision_barbero = total_bruto * Decimal('0.60')
+            comision_casa = total_bruto * Decimal('0.40')
+            
+            reporte.append({
+                'barbero': barbero,
+                'cantidad_turnos': cantidad_turnos,
+                'total_bruto': total_bruto,
+                'comision_barbero': comision_barbero,
+                'comision_casa': comision_casa,
+                'turnos_detalle': turnos
+            })
+            
+            total_general += total_bruto
+            total_turnos += cantidad_turnos
+            total_a_pagar += comision_barbero
+        
+        context = {
+            'title': 'Reporte de Liquidación Semanal',
+            'fecha_inicio': fecha_inicio,
+            'fecha_fin': fecha_fin,
+            'reporte': reporte,
+            'total_general': total_general,
+            'total_turnos': total_turnos,
+            'total_a_pagar': total_a_pagar,
+            'total_para_casa': total_general - total_a_pagar,
+            'opts': Turno._meta,
+            'has_view_permission': True,
+        }
+        
+        return render(request, 'admin/turnos/liquidacion.html', context)
+
+
+# Extender TurnoAdmin con la vista de liquidación
+class TurnoAdminExtended(TurnoAdmin, LiquidacionAdminView):
+    pass
+
+# Re-registrar Turno con la clase extendida
+admin.site.unregister(Turno)
+admin.site.register(Turno, TurnoAdminExtended)
 
 
 # Configuración del sitio de administración

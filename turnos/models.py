@@ -62,6 +62,86 @@ class Barbero(models.Model):
         return f"{self.nombre} {'✓' if self.is_active else '✗'}"
 
 
+class DiaSemana(models.IntegerChoices):
+    """
+    Días de la semana.
+    """
+    LUNES = 0, 'Lunes'
+    MARTES = 1, 'Martes'
+    MIERCOLES = 2, 'Miércoles'
+    JUEVES = 3, 'Jueves'
+    VIERNES = 4, 'Viernes'
+    SABADO = 5, 'Sábado'
+    DOMINGO = 6, 'Domingo'
+
+
+class HorarioAtencion(models.Model):
+    """
+    Horarios de atención personalizados por barbero.
+    Permite configurar horarios específicos para cada día de la semana,
+    incluyendo períodos de descanso (almuerzo).
+    """
+    barbero = models.ForeignKey(
+        Barbero,
+        on_delete=models.CASCADE,
+        related_name='horarios',
+        verbose_name='Barbero'
+    )
+    dia_semana = models.IntegerField(
+        choices=DiaSemana.choices,
+        verbose_name='Día de la semana'
+    )
+    hora_inicio = models.TimeField(
+        verbose_name='Hora de inicio',
+        help_text='Hora en que comienza a atender'
+    )
+    hora_fin = models.TimeField(
+        verbose_name='Hora de fin',
+        help_text='Hora en que termina de atender'
+    )
+    descanso_inicio = models.TimeField(
+        null=True,
+        blank=True,
+        verbose_name='Inicio de descanso',
+        help_text='Opcional: Hora de inicio del almuerzo/descanso'
+    )
+    descanso_fin = models.TimeField(
+        null=True,
+        blank=True,
+        verbose_name='Fin de descanso',
+        help_text='Opcional: Hora de fin del almuerzo/descanso'
+    )
+
+    class Meta:
+        verbose_name = 'Horario de atención'
+        verbose_name_plural = 'Horarios de atención'
+        ordering = ['barbero', 'dia_semana', 'hora_inicio']
+        unique_together = ['barbero', 'dia_semana']
+        indexes = [
+            models.Index(fields=['barbero', 'dia_semana']),
+        ]
+
+    def __str__(self):
+        descanso_text = ''
+        if self.descanso_inicio and self.descanso_fin:
+            descanso_text = f" (descanso: {self.descanso_inicio.strftime('%H:%M')}-{self.descanso_fin.strftime('%H:%M')})"
+        return f"{self.barbero.nombre} - {self.get_dia_semana_display()}: {self.hora_inicio.strftime('%H:%M')}-{self.hora_fin.strftime('%H:%M')}{descanso_text}"
+
+    def clean(self):
+        """Validar que los horarios sean coherentes"""
+        from django.core.exceptions import ValidationError
+        
+        if self.hora_inicio >= self.hora_fin:
+            raise ValidationError("La hora de inicio debe ser anterior a la hora de fin")
+        
+        if self.descanso_inicio and self.descanso_fin:
+            if self.descanso_inicio >= self.descanso_fin:
+                raise ValidationError("El inicio del descanso debe ser anterior al fin del descanso")
+            
+            if self.descanso_inicio < self.hora_inicio or self.descanso_fin > self.hora_fin:
+                raise ValidationError("El descanso debe estar dentro del horario de atención")
+
+
 class Servicio(models.Model):
     """
     Catálogo de servicios ofrecidos en la barbería.

@@ -3,8 +3,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from django.db.models import Q
+from django.utils import timezone
 from datetime import datetime, time, timedelta
-from .models import Barbero, Servicio, Turno, EstadoTurno
+from .models import Barbero, Servicio, Turno, EstadoTurno, HorarioAtencion
 from .disponibilidad_serializers import (
     DisponibilidadRequestSerializer,
     DisponibilidadResponseSerializer
@@ -17,17 +18,13 @@ class DisponibilidadView(APIView):
     PÚBLICO: Cualquier persona puede consultar disponibilidad
     
     GET /api/disponibilidad/?fecha=2026-02-15&barbero_id=1&servicio_id=1
+    
+    Ahora usa horarios personalizados por barbero configurados en HorarioAtencion.
     """
     permission_classes = [AllowAny]
     
-    # Configuración de horarios de atención
-    HORARIO_MANANA_INICIO = time(9, 0)   # 09:00
-    HORARIO_MANANA_FIN = time(13, 0)     # 13:00
-    HORARIO_TARDE_INICIO = time(16, 0)   # 16:00
-    HORARIO_TARDE_FIN = time(21, 0)      # 21:00
-    
     # Duración por defecto si no se especifica servicio
-    DURACION_DEFAULT = 30  # minutos
+    DURACION_DEFAULT = 60  # minutos (cada 1 hora)
     
     def get(self, request):
         """
@@ -54,7 +51,7 @@ class DisponibilidadView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # Obtener duración del servicio
+        # Obtener duración del servicio (para info, no afecta slots)
         duracion_minutos = self.DURACION_DEFAULT
         servicio_nombre = None
         
@@ -69,10 +66,45 @@ class DisponibilidadView(APIView):
                     status=status.HTTP_404_NOT_FOUND
                 )
         
-        # Generar todos los slots posibles
-        slots = self._generar_slots(duracion_minutos)
+        # Obtener el día de la semana de la fecha (0=Lunes, 6=Domingo)
+        dia_semana = fecha.weekday()
         
-        # Obtener turnos ocupados para ese barbero en esa fecha
+        # Buscar el horario de atención del barbero para ese día
+        try:
+            horario = HorarioAtencion.objects.get(
+                barbero_id=barbero_id,
+                dia_semana=dia_semana
+            )
+        except HorarioAtencion.DoesNotExist:
+            # El barbero no trabaja ese día (franco)
+            return Response(
+                {
+                    'fecha': fecha,
+                    'barbero': barbero.nombre,
+                    'barbero_id': barbero.id,
+                    'servicio': servicio_nombre,
+                    'duracion_servicio': duracion_minutos,
+                    'total_slots': 0,
+                    'slots_disponibles': 0,
+                    'slots_ocupados': 0,
+                    'horarios': [],
+                    'mensaje': f'{barbero.nombre} no tiene horario configurado para este día'
+                },
+                status=status.HTTP_200_OK
+            )
+        
+        # Generar todos los slots posibles según el horario del barbero
+        slots = self._generar_slots_horario_personalizado(horario)
+        
+        # FILTRAR SLOTS PASADOS SI LA FECHA ES HOY
+        fecha_actual = timezone.now().date()
+        hora_actual = timezone.now().time()
+        
+        if fecha == fecha_actual:
+            # Filtrar slots cuya hora de inicio ya pasó
+            slots = [slot for slot in slots if slot['hora'] > hora_actual]
+        
+        # Obtener los turnos ya ocupados para ese día y barbero
         turnos_ocupados = Turno.objects.filter(
             barbero_id=barbero_id,
             fecha=fecha,
@@ -105,35 +137,48 @@ class DisponibilidadView(APIView):
         
         return Response(response_data, status=status.HTTP_200_OK)
     
-    def _generar_slots(self, duracion_minutos):
+    def _generar_slots_horario_personalizado(self, horario):
         """
-        Genera todos los slots de tiempo posibles según el horario de atención.
+        Genera slots de tiempo basados en el horario personalizado del barbero.
+        Soporta horarios con descanso intermedio (ej: 9-13 y 16-21).
         
         Args:
-            duracion_minutos (int): Duración del servicio en minutos
+            horario (HorarioAtencion): Horario configurado para el barbero
             
         Returns:
-            list: Lista de diccionarios con 'hora' y 'hora_fin'
+            list: Lista de diccionarios con 'hora' y 'hora_fin' (slots de 60 minutos)
         """
         slots = []
+        duracion_minutos = 60  # Siempre 60 minutos (1 hora)
         
-        # Generar slots de la mañana (09:00 - 13:00)
-        slots.extend(
-            self._generar_slots_rango(
-                self.HORARIO_MANANA_INICIO,
-                self.HORARIO_MANANA_FIN,
-                duracion_minutos
+        # Si hay descanso, generar slots en dos rangos
+        if horario.descanso_inicio and horario.descanso_fin:
+            # Rango 1: desde inicio hasta descanso
+            slots.extend(
+                self._generar_slots_rango(
+                    horario.hora_inicio,
+                    horario.descanso_inicio,
+                    duracion_minutos
+                )
             )
-        )
-        
-        # Generar slots de la tarde (16:00 - 21:00)
-        slots.extend(
-            self._generar_slots_rango(
-                self.HORARIO_TARDE_INICIO,
-                self.HORARIO_TARDE_FIN,
-                duracion_minutos
+            
+            # Rango 2: desde fin de descanso hasta fin de jornada
+            slots.extend(
+                self._generar_slots_rango(
+                    horario.descanso_fin,
+                    horario.hora_fin,
+                    duracion_minutos
+                )
             )
-        )
+        else:
+            # Sin descanso: generar slots en un solo rango continuo
+            slots.extend(
+                self._generar_slots_rango(
+                    horario.hora_inicio,
+                    horario.hora_fin,
+                    duracion_minutos
+                )
+            )
         
         return slots
     
