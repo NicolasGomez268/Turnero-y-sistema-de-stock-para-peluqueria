@@ -13,6 +13,17 @@ const apiClient = axios.create({
   },
 });
 
+// Interceptor para agregar token de autenticación
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('admin_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
+
 /**
  * Servicios de la API para TINCHO Barbería
  */
@@ -89,6 +100,87 @@ const api = {
     } catch (error) {
       console.error('Error al reservar turno:', error);
       // Lanzar el error con los detalles del backend
+      throw error.response?.data || error;
+    }
+  },
+
+  // ===================================
+  // ADMIN ENDPOINTS
+  // ===================================
+
+  /**
+   * Login de administrador
+   * POST /api/admin/login/
+   * @param {Object} credentials - { username, password }
+   */
+  adminLogin: async (credentials) => {
+    try {
+      const response = await apiClient.post('/admin/login/', credentials);
+      return response.data;
+    } catch (error) {
+      console.error('Error en login:', error);
+      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Credenciales inválidas';
+      throw { message: errorMsg };
+    }
+  },
+
+  /**
+   * Obtener turnos de una fecha específica
+   * GET /api/admin/turnos/?fecha=YYYY-MM-DD
+   * @param {string} fecha - Fecha en formato YYYY-MM-DD
+   */
+  getTurnosPorFecha: async (fecha) => {
+    try {
+      const response = await apiClient.get('/admin/turnos/', {
+        params: { fecha }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener turnos:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Obtener turnos de los últimos 7 días (para métricas)
+   * GET /api/admin/turnos/semanales/
+   */
+  getTurnosSemanales: async () => {
+    try {
+      const response = await apiClient.get('/admin/turnos/semanales/');
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener turnos semanales:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Marcar turno como REALIZADO
+   * PATCH /api/admin/turnos/{id}/marcar-realizado/
+   * @param {number} turnoId - ID del turno
+   */
+  marcarTurnoRealizado: async (turnoId) => {
+    try {
+      const response = await apiClient.patch(`/admin/turnos/${turnoId}/marcar-realizado/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error al marcar turno realizado:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Cancelar turno
+   * PATCH /api/admin/turnos/{id}/cancelar/
+   * @param {number} turnoId - ID del turno
+   */
+  cancelarTurno: async (turnoId) => {
+    try {
+      const response = await apiClient.patch(`/admin/turnos/${turnoId}/cancelar/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error al cancelar turno:', error);
       throw error.response?.data || error;
     }
   },

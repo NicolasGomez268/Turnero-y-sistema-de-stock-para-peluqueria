@@ -1,9 +1,13 @@
+import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * Layout principal de la aplicación TINCHO Barbería
  * Incluye header impactante con título dorado y línea decorativa tricolor
  */
 const Layout = ({ children }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-tincho-dark">
       {/* HEADER IMPACTANTE */}
@@ -50,11 +54,27 @@ const Layout = ({ children }) => {
             <p className="text-xs mt-2">
               Sistema de Gestión de Turnos · Hecho con ❤️ en Argentina
             </p>
+            
+            {/* Botón discreto de acceso al admin */}
+            <button
+              onClick={() => navigate('/admin-login')}
+              className="mt-4 text-xs text-gray-600 hover:text-tincho-gold 
+                       transition-all duration-300 inline-flex items-center gap-1
+                       opacity-50 hover:opacity-100"
+              title="Acceso Administrador"
+            >
+              <span>🔒</span>
+              <span>Admin</span>
+            </button>
           </div>
         </div>
       </footer>
     </div>
-  )
-}
+  );
+};
 
-export default Layout
+Layout.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
+export default Layout;
