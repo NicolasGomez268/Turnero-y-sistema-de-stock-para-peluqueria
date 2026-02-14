@@ -123,3 +123,61 @@ class TurnoListSerializer(serializers.ModelSerializer):
             'cliente_nombre',
             'estado'
         ]
+<<<<<<< Updated upstream
+=======
+
+
+class TurnoAdminSerializer(serializers.ModelSerializer):
+    """Serializer para el panel de administración con todos los datos necesarios"""
+    barbero_nombre = serializers.CharField(source='barbero.nombre', read_only=True)
+    servicio_nombre = serializers.CharField(source='servicio.nombre', read_only=True)
+    servicio_precio = serializers.DecimalField(
+        source='servicio.precio', 
+        max_digits=10, 
+        decimal_places=2, 
+        read_only=True
+    )
+    
+    class Meta:
+        model = Turno
+        fields = [
+            'id',
+            'fecha',
+            'hora',
+            'barbero',
+            'barbero_nombre',
+            'servicio',
+            'servicio_nombre',
+            'servicio_precio',
+            'cliente_nombre',
+            'cliente_telefono',
+            'estado',
+            'notas',
+            'creado_en',
+        ]
+        read_only_fields = ['creado_en']
+
+
+
+class LiquidacionBarberoSerializer(serializers.Serializer):
+    """Serializer para liquidación individual de barbero"""
+    barbero_id = serializers.IntegerField()
+    barbero_nombre = serializers.CharField()
+    es_dueno = serializers.BooleanField()
+    cantidad_turnos = serializers.IntegerField()
+    total_bruto = serializers.DecimalField(max_digits=10, decimal_places=2)
+    porcentaje_barbero = serializers.DecimalField(max_digits=5, decimal_places=2)
+    comision_barbero = serializers.DecimalField(max_digits=10, decimal_places=2)
+    comision_casa = serializers.DecimalField(max_digits=10, decimal_places=2)
+
+
+class ResumenCajaDiariaSerializer(serializers.Serializer):
+    """Serializer para resumen de caja del día"""
+    fecha = serializers.DateField()
+    total_turnos_realizados = serializers.IntegerField()
+    total_ingresos_turnos = serializers.DecimalField(max_digits=10, decimal_places=2)
+    total_ventas_productos = serializers.DecimalField(max_digits=10, decimal_places=2)
+    total_general = serializers.DecimalField(max_digits=10, decimal_places=2)
+    desglose_metodos_pago = serializers.DictField()
+        
+>>>>>>> Stashed changes

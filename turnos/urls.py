@@ -10,7 +10,21 @@ from .admin_views import (
     get_turnos_semanales,
     marcar_turno_realizado,
     cancelar_turno,
+<<<<<<< Updated upstream
     crear_turno_manual,
+=======
+)
+from .liquidacion_views import (
+    liquidacion_semanal,
+    caja_diaria,
+    metricas_mensuales,
+)
+from .barberos_views import (
+    manage_barberos_list,
+    update_barbero,
+    upload_barbero_photo,
+    manage_barbero_horarios,
+>>>>>>> Stashed changes
 )
 
 # Router para las APIs de la app
@@ -37,4 +51,18 @@ urlpatterns = [
     path('admin/turnos/semanales/', get_turnos_semanales, name='admin-turnos-semanales'),
     path('admin/turnos/<int:turno_id>/marcar-realizado/', marcar_turno_realizado, name='admin-marcar-realizado'),
     path('admin/turnos/<int:turno_id>/cancelar/', cancelar_turno, name='admin-cancelar-turno'),
+<<<<<<< Updated upstream
+=======
+        
+    # Liquidación y Caja
+    path('admin/liquidacion/', liquidacion_semanal, name='admin-liquidacion'),
+    path('admin/caja-diaria/', caja_diaria, name='admin-caja-diaria'),
+    path('admin/metricas-mensuales/', metricas_mensuales, name='admin-metricas-mensuales'),
+    
+    # Gestión de Barberos (REST API completo)
+    path('barberos/', manage_barberos_list, name='barberos-list'),  # GET (listar) / POST (crear)
+    path('barberos/<int:barbero_id>/', update_barbero, name='barbero-detail'),  # PUT (actualizar)
+    path('barberos/<int:barbero_id>/foto/', upload_barbero_photo, name='barbero-foto'),  # PATCH (subir foto)
+    path('barberos/<int:barbero_id>/horarios/', manage_barbero_horarios, name='barbero-horarios'),  # GET/PUT horarios
+>>>>>>> Stashed changes
 ]

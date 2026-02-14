@@ -42,6 +42,18 @@ class Barbero(models.Model):
         verbose_name='Activo',
         help_text='Desmarcar para ocultar al barbero sin eliminar su historial'
     )
+    is_owner = models.BooleanField(
+        default=False,
+        verbose_name='Es el dueño',
+        help_text='Marcar si este barbero es el dueño del negocio (recibe 100% de sus cortes)'
+    )
+    porcentaje_casa = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=40.00,
+        verbose_name='Porcentaje para la Casa (%)',
+        help_text='Porcentaje que se queda la casa por cada corte (ej: 40.00 significa 40%)'
+    )
     color_hex = models.CharField(
         max_length=7,
         default='#3B82F6',

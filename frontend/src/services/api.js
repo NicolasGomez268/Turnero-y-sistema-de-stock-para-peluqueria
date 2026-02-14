@@ -347,6 +347,69 @@ const api = {
       throw error.response?.data || error;
     }
   },
-};
 
+
+  // ===================================
+  // LIQUIDACIÓN Y CAJA
+  // ===================================
+
+  /**
+   * Obtener liquidación semanal de barberos
+   * GET /api/admin/liquidacion/?fecha_inicio=YYYY-MM-DD&fecha_fin=YYYY-MM-DD
+   * @param {string} fechaInicio - Fecha de inicio (YYYY-MM-DD)
+   * @param {string} fechaFin - Fecha de fin (YYYY-MM-DD)
+   */
+  getLiquidacion: async (fechaInicio, fechaFin) => {
+    try {
+      const params = {};
+      if (fechaInicio) params.fecha_inicio = fechaInicio;
+      if (fechaFin) params.fecha_fin = fechaFin;
+      
+      const response = await apiClient.get('/admin/liquidacion/', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener liquidación:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Obtener caja diaria
+   * GET /api/admin/caja-diaria/?fecha=YYYY-MM-DD
+   * @param {string} fecha - Fecha (YYYY-MM-DD), default: hoy
+   */
+  getCajaDiaria: async (fecha) => {
+    try {
+      const params = {};
+      if (fecha) params.fecha = fecha;
+      
+      const response = await apiClient.get('/admin/caja-diaria/', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener caja diaria:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Obtener métricas mensuales
+   * GET /api/admin/metricas-mensuales/?mes=2&anio=2026
+   * @param {number} mes - Número del mes (1-12)
+   * @param {number} anio - Año
+   */
+  getMetricasMensuales: async (mes, anio) => {
+    try {
+      const params = {};
+      if (mes) params.mes = mes;
+      if (anio) params.anio = anio;
+      
+      const response = await apiClient.get('/admin/metricas-mensuales/', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener métricas mensuales:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+};
 export default api;
