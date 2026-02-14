@@ -37,6 +37,13 @@ class Barbero(models.Model):
         max_length=17,
         verbose_name='Teléfono'
     )
+    especialidad = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        verbose_name='Especialidad',
+        help_text='Especialidad o descripción del barbero (ej: Cortes clásicos, Barbas, etc.)'
+    )
     is_active = models.BooleanField(
         default=True,
         verbose_name='Activo',
@@ -206,7 +213,7 @@ class Turno(models.Model):
     servicio = models.ForeignKey(
         Servicio,
         on_delete=models.PROTECT,
-        related_name='turnos',
+        related_name='turnos_servicio',
         verbose_name='Servicio solicitado'
     )
     

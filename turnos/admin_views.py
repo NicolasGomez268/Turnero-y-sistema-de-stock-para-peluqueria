@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime, timedelta
 from rest_framework.authtoken.models import Token
 from .models import Turno
-from .serializers import TurnoSerializer
+from .serializers import TurnoAdminSerializer
 
 
 @csrf_exempt
@@ -69,36 +69,44 @@ def get_turnos_fecha(request):
     """
     Obtener turnos de una fecha específica
     GET /api/admin/turnos/?fecha=YYYY-MM-DD
+    
+    Si no se especifica fecha, retorna turnos de hoy.
+    Incluye manejo de errores para fechas inválidas.
     """
-    fecha_str = request.query_params.get('fecha')
-    
-    if not fecha_str:
-        # Si no se especifica fecha, usar hoy
-        fecha = timezone.now().date()
-    else:
-        try:
-            fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
-        except ValueError:
-            return Response(
-                {'error': 'Formato de fecha inválido. Usar YYYY-MM-DD'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-    
-    # Obtener turnos de la fecha
-    turnos = Turno.objects.filter(fecha=fecha).select_related(
-        'barbero', 'servicio'
-    ).order_by('hora')
-    
-    # Serializar y agregar nombres
-    turnos_data = []
-    for turno in turnos:
-        data = TurnoSerializer(turno).data
-        data['barbero_nombre'] = turno.barbero.nombre
-        data['servicio_nombre'] = turno.servicio.nombre
-        data['servicio_precio'] = str(turno.servicio.precio)
-        turnos_data.append(data)
-    
-    return Response(turnos_data)
+    try:
+        fecha_str = request.query_params.get('fecha')
+        
+        if not fecha_str:
+            # Si no se especifica fecha, usar hoy
+            fecha = timezone.now().date()
+        else:
+            # Parsear fecha
+            try:
+                fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            except ValueError:
+                return Response(
+                    {'error': 'Formato de fecha inválido. Usar YYYY-MM-DD'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        # Obtener turnos de la fecha con optimización de queries
+        turnos = Turno.objects.filter(
+            fecha=fecha
+        ).select_related(
+            'barbero', 'servicio'
+        ).order_by('hora')
+        
+        # Serializar con el serializer específico para admin
+        serializer = TurnoAdminSerializer(turnos, many=True)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        # Capturar cualquier error inesperado
+        return Response(
+            {'error': f'Error al obtener turnos: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 @api_view(['GET'])
@@ -107,25 +115,31 @@ def get_turnos_semanales(request):
     """
     Obtener turnos de los últimos 7 días (para métricas)
     GET /api/admin/turnos/semanales/
+    
+    Retorna todos los turnos de la última semana para calcular
+    ganancias semanales y otros indicadores.
     """
-    fecha_inicio = timezone.now().date() - timedelta(days=7)
-    fecha_fin = timezone.now().date()
-    
-    turnos = Turno.objects.filter(
-        fecha__gte=fecha_inicio,
-        fecha__lte=fecha_fin
-    ).select_related('barbero', 'servicio').order_by('-fecha', 'hora')
-    
-    # Serializar
-    turnos_data = []
-    for turno in turnos:
-        data = TurnoSerializer(turno).data
-        data['barbero_nombre'] = turno.barbero.nombre
-        data['servicio_nombre'] = turno.servicio.nombre
-        data['servicio_precio'] = str(turno.servicio.precio)
-        turnos_data.append(data)
-    
-    return Response(turnos_data)
+    try:
+        fecha_inicio = timezone.now().date() - timedelta(days=7)
+        fecha_fin = timezone.now().date()
+        
+        turnos = Turno.objects.filter(
+            fecha__gte=fecha_inicio,
+            fecha__lte=fecha_fin
+        ).select_related(
+            'barbero', 'servicio'
+        ).order_by('-fecha', 'hora')
+        
+        # Serializar con el serializer específico para admin
+        serializer = TurnoAdminSerializer(turnos, many=True)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Error al obtener turnos semanales: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 @api_view(['PATCH'])
@@ -152,13 +166,11 @@ def marcar_turno_realizado(request, turno_id):
     turno.estado = 'REALIZADO'
     turno.save()
     
-    data = TurnoSerializer(turno).data
-    data['barbero_nombre'] = turno.barbero.nombre
-    data['servicio_nombre'] = turno.servicio.nombre
+    serializer = TurnoAdminSerializer(turno)
     
     return Response({
         'message': 'Turno marcado como REALIZADO',
-        'turno': data
+        'turno': serializer.data
     })
 
 
@@ -186,11 +198,9 @@ def cancelar_turno(request, turno_id):
     turno.estado = 'CANCELADO'
     turno.save()
     
-    data = TurnoSerializer(turno).data
-    data['barbero_nombre'] = turno.barbero.nombre
-    data['servicio_nombre'] = turno.servicio.nombre
+    serializer = TurnoAdminSerializer(turno)
     
     return Response({
         'message': 'Turno cancelado exitosamente',
-        'turno': data
+        'turno': serializer.data
     })

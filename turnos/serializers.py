@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Barbero, Servicio, Turno, EstadoTurno
+from .models import Barbero, Servicio, Turno, EstadoTurno, HorarioAtencion
 
 
 class BarberoSerializer(serializers.ModelSerializer):
@@ -13,6 +13,7 @@ class BarberoSerializer(serializers.ModelSerializer):
             'nombre',
             'foto',
             'telefono',
+            'especialidad',
             'is_active',
             'color_hex',
             'fecha_ingreso',
@@ -23,6 +24,23 @@ class BarberoSerializer(serializers.ModelSerializer):
     def get_cantidad_turnos_realizados(self, obj):
         """Retorna la cantidad de turnos realizados por este barbero"""
         return obj.turnos.filter(estado=EstadoTurno.REALIZADO).count()
+
+
+class HorarioAtencionSerializer(serializers.ModelSerializer):
+    """Serializer para el modelo HorarioAtencion"""
+    
+    class Meta:
+        model = HorarioAtencion
+        fields = [
+            'id',
+            'barbero',
+            'dia_semana',
+            'hora_inicio',
+            'hora_fin',
+            'descanso_inicio',
+            'descanso_fin',
+        ]
+        read_only_fields = ['id']
 
 
 class ServicioSerializer(serializers.ModelSerializer):
@@ -123,3 +141,34 @@ class TurnoListSerializer(serializers.ModelSerializer):
             'cliente_nombre',
             'estado'
         ]
+
+
+class TurnoAdminSerializer(serializers.ModelSerializer):
+    """Serializer para el panel de administración con todos los datos necesarios"""
+    barbero_nombre = serializers.CharField(source='barbero.nombre', read_only=True)
+    servicio_nombre = serializers.CharField(source='servicio.nombre', read_only=True)
+    servicio_precio = serializers.DecimalField(
+        source='servicio.precio', 
+        max_digits=10, 
+        decimal_places=2, 
+        read_only=True
+    )
+    
+    class Meta:
+        model = Turno
+        fields = [
+            'id',
+            'fecha',
+            'hora',
+            'barbero',
+            'barbero_nombre',
+            'servicio',
+            'servicio_nombre',
+            'servicio_precio',
+            'cliente_nombre',
+            'cliente_telefono',
+            'estado',
+            'notas',
+            'creado_en',
+        ]
+        read_only_fields = ['creado_en']
