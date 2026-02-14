@@ -1,6 +1,8 @@
 from django.shortcuts import render
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters, status
+from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.authentication import TokenAuthentication
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Barbero, Servicio, Turno
 from .serializers import BarberoSerializer, ServicioSerializer, TurnoSerializer
@@ -15,6 +17,7 @@ class BarberoViewSet(viewsets.ModelViewSet):
     """
     queryset = Barbero.objects.all()
     serializer_class = BarberoSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAdminOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['nombre', 'telefono']
@@ -38,6 +41,7 @@ class ServicioViewSet(viewsets.ModelViewSet):
     """
     queryset = Servicio.objects.all()
     serializer_class = ServicioSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAdminOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['nombre', 'descripcion']
@@ -51,6 +55,27 @@ class ServicioViewSet(viewsets.ModelViewSet):
         if active and active.lower() == 'true':
             queryset = queryset.filter(is_active=True)
         return queryset
+    
+    def destroy(self, request, *args, **kwargs):
+        """
+        Eliminar servicio verificando que no tenga turnos asociados.
+        Si tiene turnos, devuelve error 400 con mensaje descriptivo.
+        """
+        servicio = self.get_object()
+        turnos_count = servicio.turnos_servicio.count()
+        
+        if turnos_count > 0:
+            return Response(
+                {
+                    'error': 'No se puede eliminar el servicio',
+                    'mensaje': f'El servicio "{servicio.nombre}" tiene {turnos_count} turno(s) asociado(s).',
+                    'sugerencia': 'Desactiva el servicio en lugar de eliminarlo para mantener el historial de turnos.',
+                    'turnos_count': turnos_count
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        return super().destroy(request, *args, **kwargs)
 
 
 class TurnoViewSet(viewsets.ModelViewSet):

@@ -184,6 +184,169 @@ const api = {
       throw error.response?.data || error;
     }
   },
+
+  /**
+   * Crear turno manualmente (para walk-ins)
+   * POST /api/admin/turnos/manual/
+   * @param {Object} data - Datos del turno (barbero_id, servicio_id, fecha, hora, cliente_nombre, cliente_telefono, notas)
+   */
+  createTurnoManual: async (data) => {
+    try {
+      const response = await apiClient.post('/admin/turnos/manual/', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error al crear turno manual:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  // ===================================
+  // GESTIÓN DE SERVICIOS (CRUD)
+  // ===================================
+
+  /**
+   * Crear un nuevo servicio
+   * POST /api/servicios/
+   */
+  createServicio: async (data) => {
+    try {
+      const response = await apiClient.post('/servicios/', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error al crear servicio:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Actualizar un servicio existente
+   * PUT /api/servicios/{id}/
+   */
+  updateServicio: async (id, data) => {
+    try {
+      const response = await apiClient.put(`/servicios/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Error al actualizar servicio:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Eliminar un servicio
+   * DELETE /api/servicios/{id}/
+   */
+  deleteServicio: async (id) => {
+    try {
+      const response = await apiClient.delete(`/servicios/${id}/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error al eliminar servicio:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  // ===================================
+  // GESTIÓN DE BARBEROS
+  // ===================================
+
+  /**
+   * Obtener todos los barberos (incluidos inactivos)
+   * GET /api/barberos/
+   */
+  getAllBarberos: async () => {
+    try {
+      const response = await apiClient.get('/barberos/');
+      return response.data.results || response.data;
+    } catch (error) {
+      console.error('Error al obtener todos los barberos:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Actualizar barbero
+   * PUT /api/barberos/{id}/
+   * @param {number} barberoId - ID del barbero
+   * @param {Object} data - Datos a actualizar (is_active, nombre, especialidad, etc.)
+   */
+  updateBarbero: async (barberoId, data) => {
+    try {
+      const response = await apiClient.put(`/barberos/${barberoId}/`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Error al actualizar barbero:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Crear nuevo barbero
+   * POST /api/barberos/
+   * @param {Object} data - Datos del nuevo barbero
+   */
+  createBarbero: async (data) => {
+    try {
+      const response = await apiClient.post('/barberos/', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error al crear barbero:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Subir foto de barbero
+   * PATCH /api/barberos/{id}/foto/
+   * @param {number} barberoId - ID del barbero
+   * @param {File} file - Archivo de imagen
+   */
+  uploadBarberoPhoto: async (barberoId, file) => {
+    try {
+      const formData = new FormData();
+      formData.append('foto', file);
+      const response = await apiClient.patch(`/barberos/${barberoId}/foto/`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error al subir foto:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Obtener horarios de un barbero
+   * GET /api/barberos/{id}/horarios/
+   * @param {number} barberoId - ID del barbero
+   */
+  getBarberoHorarios: async (barberoId) => {
+    try {
+      const response = await apiClient.get(`/barberos/${barberoId}/horarios/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener horarios:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Actualizar horarios de un barbero
+   * PUT /api/barberos/{id}/horarios/
+   * @param {number} barberoId - ID del barbero
+   * @param {Array} horarios - Array de horarios
+   */
+  updateBarberoHorarios: async (barberoId, horarios) => {
+    try {
+      const response = await apiClient.put(`/barberos/${barberoId}/horarios/`, { horarios });
+      return response.data;
+    } catch (error) {
+      console.error('Error al actualizar horarios:', error);
+      throw error.response?.data || error;
+    }
+  },
 };
 
 export default api;

@@ -36,6 +36,17 @@ function App() {
 
           {/* Ruta protegida - Gestión de Stock (placeholder para futuro) */}
           <Route 
+            path="/admin-servicios" 
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<ServiciosAdmin />} />
+          </Route>
+
+          <Route 
             path="/admin-stock" 
             element={
               <ProtectedRoute>

@@ -4,6 +4,7 @@ Maneja la autenticación y gestión de turnos desde el frontend
 """
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import authenticate
@@ -11,8 +12,8 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime, timedelta
 from rest_framework.authtoken.models import Token
-from .models import Turno
-from .serializers import TurnoSerializer
+from .models import Turno, Barbero, Servicio, EstadoTurno
+from .serializers import TurnoAdminSerializer
 
 
 @csrf_exempt
@@ -129,6 +130,7 @@ def get_turnos_semanales(request):
 
 
 @api_view(['PATCH'])
+@authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def marcar_turno_realizado(request, turno_id):
     """
@@ -163,6 +165,7 @@ def marcar_turno_realizado(request, turno_id):
 
 
 @api_view(['PATCH'])
+@authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def cancelar_turno(request, turno_id):
     """
@@ -194,3 +197,144 @@ def cancelar_turno(request, turno_id):
         'message': 'Turno cancelado exitosamente',
         'turno': data
     })
+
+
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def crear_turno_manual(request):
+    """
+    Crear un turno manualmente desde el panel admin
+    POST /api/admin/turnos/manual/
+    Body: {
+        "barbero_id": 1,
+        "servicio_id": 2,
+        "fecha": "2026-02-14",
+        "hora": "14:30",
+        "cliente_nombre": "Juan Pérez",
+        "cliente_telefono": "+5493515551234",
+        "notas": "Walk-in sin reserva previa"
+    }
+    """
+    # Debug: Log datos recibidos
+    print("DEBUG - Crear turno manual - Datos recibidos:")
+    print(f"request.data: {request.data}")
+    print(f"user: {request.user}")
+    print(f"is_staff: {request.user.is_staff if hasattr(request.user, 'is_staff') else 'N/A'}")
+    
+    # Validar usuario staff
+    if not request.user.is_staff:
+        return Response(
+            {'error': 'Solo administradores pueden crear turnos manuales'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    # Obtener datos del request
+    barbero_id = request.data.get('barbero_id')
+    servicio_id = request.data.get('servicio_id')
+    fecha_str = request.data.get('fecha')
+    hora_str = request.data.get('hora')
+    cliente_nombre = request.data.get('cliente_nombre')
+    cliente_telefono = request.data.get('cliente_telefono')
+    notas = request.data.get('notas', '')
+    
+    # Debug: Log campos extraídos
+    print(f"DEBUG - Campos extraídos:")
+    print(f"  barbero_id: {barbero_id} (tipo: {type(barbero_id)})")
+    print(f"  servicio_id: {servicio_id} (tipo: {type(servicio_id)})")
+    print(f"  fecha_str: {fecha_str} (tipo: {type(fecha_str)})")
+    print(f"  hora_str: '{hora_str}' (tipo: {type(hora_str)})")
+    print(f"  cliente_nombre: '{cliente_nombre}' (tipo: {type(cliente_nombre)})")
+    print(f"  cliente_telefono: '{cliente_telefono}' (tipo: {type(cliente_telefono)})")
+    
+    # Validar campos requeridos
+    if not all([barbero_id, servicio_id, fecha_str, hora_str, cliente_nombre, cliente_telefono]):
+        campos_vacios = []
+        if not barbero_id: campos_vacios.append('barbero_id')
+        if not servicio_id: campos_vacios.append('servicio_id')
+        if not fecha_str: campos_vacios.append('fecha')
+        if not hora_str: campos_vacios.append('hora')
+        if not cliente_nombre: campos_vacios.append('cliente_nombre')
+        if not cliente_telefono: campos_vacios.append('cliente_telefono')
+        print(f"DEBUG - Campos vacíos: {campos_vacios}")
+        return Response(
+            {'error': f'Campos requeridos faltantes: {", ".join(campos_vacios)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Validar y obtener barbero
+    try:
+        barbero = Barbero.objects.get(id=barbero_id, is_active=True)
+    except Barbero.DoesNotExist:
+        return Response(
+            {'error': 'Barbero no encontrado o inactivo'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Validar y obtener servicio
+    try:
+        servicio = Servicio.objects.get(id=servicio_id, is_active=True)
+    except Servicio.DoesNotExist:
+        return Response(
+            {'error': 'Servicio no encontrado o inactivo'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Parsear fecha y hora
+    try:
+        print(f"DEBUG - Parseando fecha: '{fecha_str}' y hora: '{hora_str}'")
+        fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+        
+        # Intentar primero con segundos (HH:MM:SS), luego sin segundos (HH:MM)
+        try:
+            hora = datetime.strptime(hora_str, '%H:%M:%S').time()
+        except ValueError:
+            hora = datetime.strptime(hora_str, '%H:%M').time()
+            
+        print(f"DEBUG - Fecha parseada: {fecha}, Hora parseada: {hora}")
+    except ValueError as e:
+        print(f"DEBUG - Error al parsear fecha/hora: {e}")
+        return Response(
+            {'error': f'Formato de fecha u hora inválido (use YYYY-MM-DD y HH:MM o HH:MM:SS). Error: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Verificar si el slot está disponible (opcional, puede omitirse para walk-ins)
+    turno_existente = Turno.objects.filter(
+        barbero=barbero,
+        fecha=fecha,
+        hora=hora,
+        estado__in=[EstadoTurno.PENDIENTE, EstadoTurno.CONFIRMADO]
+    ).exists()
+    
+    if turno_existente:
+        return Response(
+            {'error': 'Ya existe un turno para este barbero en ese horario. ¿Desea crearlo de todas formas?'},
+            status=status.HTTP_409_CONFLICT
+        )
+    
+    # Crear el turno con estado CONFIRMADO
+    try:
+        turno = Turno.objects.create(
+            barbero=barbero,
+            servicio=servicio,
+            fecha=fecha,
+            hora=hora,
+            cliente_nombre=cliente_nombre,
+            cliente_telefono=cliente_telefono,
+            notas=notas,
+            estado=EstadoTurno.CONFIRMADO  # Confirmado automáticamente
+        )
+        
+        serializer = TurnoAdminSerializer(turno)
+        
+        return Response({
+            'message': 'Turno creado exitosamente',
+            'turno': serializer.data
+        }, status=status.HTTP_201_CREATED)
+    
+    except Exception as e:
+        return Response(
+            {'error': f'Error al crear turno: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

@@ -10,6 +10,7 @@ from .admin_views import (
     get_turnos_semanales,
     marcar_turno_realizado,
     cancelar_turno,
+    crear_turno_manual,
 )
 
 # Router para las APIs de la app
@@ -32,6 +33,7 @@ urlpatterns = [
     # Panel Admin React
     path('admin/login/', admin_login, name='admin-login'),
     path('admin/turnos/', get_turnos_fecha, name='admin-turnos'),
+    path('admin/turnos/manual/', crear_turno_manual, name='admin-crear-turno-manual'),
     path('admin/turnos/semanales/', get_turnos_semanales, name='admin-turnos-semanales'),
     path('admin/turnos/<int:turno_id>/marcar-realizado/', marcar_turno_realizado, name='admin-marcar-realizado'),
     path('admin/turnos/<int:turno_id>/cancelar/', cancelar_turno, name='admin-cancelar-turno'),
