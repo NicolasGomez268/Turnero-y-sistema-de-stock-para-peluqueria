@@ -6,11 +6,12 @@ from .models import Producto, Venta
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
     """
-    Administración de Productos de Indumentaria.
+    Administración de Productos genéricos del negocio.
     """
     list_display = [
         'nombre',
-        'talle',
+        'variante',
+        'categoria',
         'precio_costo_display',
         'precio_venta_display',
         'stock_display',
@@ -18,30 +19,32 @@ class ProductoAdmin(admin.ModelAdmin):
         'is_active',
         'creado_en'
     ]
-    
+
     list_filter = [
         'is_active',
-        'talle',
+        'categoria',
         'creado_en'
     ]
-    
+
     search_fields = [
         'nombre',
+        'variante',
+        'categoria',
         'descripcion'
     ]
-    
+
     readonly_fields = [
         'creado_en',
         'actualizado_en',
         'margen_ganancia',
         'porcentaje_ganancia'
     ]
-    
+
     list_editable = ['is_active']
-    
+
     fieldsets = (
         ('Información del Producto', {
-            'fields': ('nombre', 'talle', 'descripcion', 'is_active')
+            'fields': ('nombre', 'variante', 'categoria', 'descripcion', 'is_active')
         }),
         ('Precios', {
             'fields': ('precio_costo', 'precio_venta', 'margen_ganancia', 'porcentaje_ganancia')
@@ -215,4 +218,4 @@ class VentaAdmin(admin.ModelAdmin):
 
 
 # Configuración adicional del sitio
-admin.site.site_header = 'TINCHO Barbería & Indumentaria'
+admin.site.site_header = 'TINCHO Barbería & Stock'

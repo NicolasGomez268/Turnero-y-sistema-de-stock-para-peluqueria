@@ -309,7 +309,7 @@ const HorariosModal = ({ barbero, onClose, onSave }) => {
 
   return (
     <div className="fixed inset-0 admin-modal-backdrop flex items-center justify-center z-50 p-4">
-      <div className="admin-modal-gold rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="admin-modal-gold rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto mx-2 sm:mx-auto">
         {/* Header */}
         <div className="sticky top-0 bg-gradient-to-b from-black/80 to-transparent border-b border-oro-fuerte/30 p-6 flex 
                       items-center justify-between">
@@ -330,11 +330,11 @@ const HorariosModal = ({ barbero, onClose, onSave }) => {
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-3 sm:p-6">
           {loading ? (
             <div className="text-center py-8 text-gray-400">Cargando...</div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {diasSemana.map((dia) => {
                 const horario = horarios.find(h => h.dia_semana === dia.id) || {
                   dia_semana: dia.id,
@@ -344,10 +344,10 @@ const HorariosModal = ({ barbero, onClose, onSave }) => {
                 };
 
                 return (
-                  <div key={dia.id} className="bg-gray-800 rounded-lg p-4">
-                    <div className="flex items-center gap-4 flex-wrap">
+                  <div key={dia.id} className="bg-gray-800 rounded-lg p-3 sm:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                       {/* Día y Switch */}
-                      <div className="w-32">
+                      <div className="w-full sm:w-28 shrink-0">
                         <label className="flex items-center gap-2 cursor-pointer">
                           <input
                             type="checkbox"
@@ -362,48 +362,46 @@ const HorariosModal = ({ barbero, onClose, onSave }) => {
                       </div>
 
                       {horario.activo && (
-                        <>
+                        <div className="flex flex-wrap items-center gap-2">
                           {/* Horarios */}
                           <div className="flex items-center gap-2">
                             <input
                               type="time"
                               value={horario.hora_inicio || '09:00'}
                               onChange={(e) => handleUpdate(dia.id, 'hora_inicio', e.target.value)}
-                              className="px-3 py-2 bg-gray-900 border border-gray-600 
-                                       rounded text-gray-300 focus:border-tincho-gold"
+                              className="px-2 py-1.5 bg-gray-900 border border-gray-600 
+                                       rounded text-gray-300 text-sm focus:border-tincho-gold"
                             />
-                            <span className="text-gray-500">a</span>
+                            <span className="text-gray-500 text-sm">a</span>
                             <input
                               type="time"
                               value={horario.hora_fin || '18:00'}
                               onChange={(e) => handleUpdate(dia.id, 'hora_fin', e.target.value)}
-                              className="px-3 py-2 bg-gray-900 border border-gray-600 
-                                       rounded text-gray-300 focus:border-tincho-gold"
+                              className="px-2 py-1.5 bg-gray-900 border border-gray-600 
+                                       rounded text-gray-300 text-sm focus:border-tincho-gold"
                             />
                           </div>
 
                           {/* Descanso (opcional) */}
-                          <div className="flex items-center gap-2 text-sm">
-                            <span className="text-gray-500">Descanso:</span>
+                          <div className="flex items-center gap-1.5 text-sm">
+                            <span className="text-gray-500 text-xs">Descanso:</span>
                             <input
                               type="time"
                               value={horario.descanso_inicio || ''}
                               onChange={(e) => handleUpdate(dia.id, 'descanso_inicio', e.target.value)}
-                              placeholder="Inicio"
                               className="px-2 py-1 bg-gray-900 border border-gray-600 
                                        rounded text-gray-300 text-sm focus:border-tincho-gold"
                             />
-                            <span className="text-gray-500">a</span>
+                            <span className="text-gray-500 text-xs">a</span>
                             <input
                               type="time"
                               value={horario.descanso_fin || ''}
                               onChange={(e) => handleUpdate(dia.id, 'descanso_fin', e.target.value)}
-                              placeholder="Fin"
                               className="px-2 py-1 bg-gray-900 border border-gray-600 
                                        rounded text-gray-300 text-sm focus:border-tincho-gold"
                             />
                           </div>
-                        </>
+                        </div>
                       )}
                     </div>
                   </div>

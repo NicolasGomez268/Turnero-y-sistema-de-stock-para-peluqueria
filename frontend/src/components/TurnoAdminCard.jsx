@@ -1,20 +1,36 @@
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 
+const METODOS_PAGO = [
+  { value: 'EFECTIVO',      label: 'Efectivo',     icon: '💵', color: 'border-green-500 hover:bg-green-500/20 text-green-400' },
+  { value: 'TRANSFERENCIA', label: 'Transferencia', icon: '📲', color: 'border-blue-500 hover:bg-blue-500/20 text-blue-400' },
+  { value: 'TARJETA',       label: 'Tarjeta',       icon: '💳', color: 'border-purple-500 hover:bg-purple-500/20 text-purple-400' },
+];
+
 const TurnoAdminCard = ({ turno, onMarcarAsistio, onCancelar, loading }) => {
+  const [seleccionandoPago, setSeleccionandoPago] = useState(false);
+
   const getEstadoColor = (estado) => {
     switch (estado) {
-      case 'PENDIENTE':
-        return 'bg-blue-500/20 text-blue-400 border-blue-500';
-      case 'REALIZADO':
-        return 'bg-green-500/20 text-green-400 border-green-500';
-      case 'CANCELADO':
-        return 'bg-red-500/20 text-red-400 border-red-500';
-      default:
-        return 'bg-gray-500/20 text-gray-400 border-gray-500';
+      case 'PENDIENTE':  return 'bg-blue-500/20 text-blue-400 border-blue-500';
+      case 'REALIZADO':  return 'bg-green-500/20 text-green-400 border-green-500';
+      case 'CANCELADO':  return 'bg-red-500/20 text-red-400 border-red-500';
+      default:           return 'bg-gray-500/20 text-gray-400 border-gray-500';
     }
   };
 
   const isPendiente = turno.estado === 'PENDIENTE';
+
+  // Bloquear si el turno todavía no llegó
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const fechaTurno = new Date(turno.fecha + 'T00:00:00');
+  const esFuturo = fechaTurno > hoy;
+
+  const handleConfirmarPago = (metodo) => {
+    setSeleccionandoPago(false);
+    onMarcarAsistio(turno.id, metodo);
+  };
 
   return (
     <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-tincho-gold 
@@ -63,31 +79,67 @@ const TurnoAdminCard = ({ turno, onMarcarAsistio, onCancelar, loading }) => {
 
       {/* Botones de acción */}
       {isPendiente && (
-        <div className="flex gap-2">
-          <button
-            onClick={() => onMarcarAsistio(turno.id)}
-            disabled={loading}
-            className="flex-1 py-2 px-4 bg-green-600 hover:bg-green-700 
-                     text-white font-bold rounded-lg transition-all duration-200
-                     disabled:opacity-50 disabled:cursor-not-allowed
-                     flex items-center justify-center gap-2"
-          >
-            <span>✓</span>
-            <span>Asistió</span>
-          </button>
+        seleccionandoPago ? (
+          <div>
+            <p className="text-gray-400 text-xs mb-2 font-semibold uppercase tracking-wide">
+              ¿Método de pago?
+            </p>
+            <div className="flex flex-col gap-1.5 mb-2">
+              {METODOS_PAGO.map((m) => (
+                <button
+                  key={m.value}
+                  onClick={() => handleConfirmarPago(m.value)}
+                  disabled={loading}
+                  className={`w-full py-1.5 px-3 rounded-lg border bg-transparent font-semibold text-sm
+                              transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed
+                              flex items-center gap-2 ${m.color}`}
+                >
+                  <span>{m.icon}</span>
+                  <span>{m.label}</span>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setSeleccionandoPago(false)}
+              className="w-full py-1.5 text-gray-500 hover:text-gray-300 text-xs transition-colors"
+            >
+              ← Volver
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {esFuturo && (
+              <div className="text-xs text-yellow-500/80 bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 py-2 text-center">
+                Turno futuro — confirmá asistencia el día del turno
+              </div>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSeleccionandoPago(true)}
+                disabled={loading || esFuturo}
+                className="flex-1 py-2 px-4 bg-oro-base hover:bg-oro-brillo 
+                         text-tincho-dark font-bold rounded-lg transition-all duration-200
+                         disabled:opacity-30 disabled:cursor-not-allowed
+                         flex items-center justify-center gap-2"
+              >
+                <span>✓</span>
+                <span>Asistió</span>
+              </button>
 
-          <button
-            onClick={() => onCancelar(turno.id)}
-            disabled={loading}
-            className="flex-1 py-2 px-4 bg-red-600 hover:bg-red-700 
-                     text-white font-bold rounded-lg transition-all duration-200
-                     disabled:opacity-50 disabled:cursor-not-allowed
-                     flex items-center justify-center gap-2"
-          >
-            <span>✕</span>
-            <span>Cancelar</span>
-          </button>
-        </div>
+              <button
+                onClick={() => onCancelar(turno.id)}
+                disabled={loading}
+                className="flex-1 py-2 px-4 bg-red-600 hover:bg-red-700 
+                         text-white font-bold rounded-lg transition-all duration-200
+                         disabled:opacity-50 disabled:cursor-not-allowed
+                         flex items-center justify-center gap-2"
+              >
+                <span>✕</span>
+                <span>Cancelar</span>
+              </button>
+            </div>
+          </div>
+        )
       )}
     </div>
   );

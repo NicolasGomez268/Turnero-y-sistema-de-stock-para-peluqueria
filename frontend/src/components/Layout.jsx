@@ -81,13 +81,39 @@ const Layout = ({ children }) => {
         <div className="container mx-auto px-4 py-6">
           <div className="text-center text-gray-400">
             <p className="text-sm">
-              © 2026 <span className="text-tincho-gold font-bold">TINCHO</span> Barbería & Indumentaria
+              © 2026 <span className="text-tincho-gold font-bold">TINCHO</span> Barbería &amp; Indumentaria
             </p>
+
+            {/* Crédito EasysTech */}
+            <div className="mt-4 flex items-center justify-center gap-2">
+              <div className="h-px w-16 bg-gradient-to-r from-transparent to-gray-700" />
+              <a
+                href="https://www.easytech.ar/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-xs text-gray-500 hover:text-white
+                           transition-all duration-300 opacity-60 hover:opacity-100 group"
+                title="Desarrollado por EasyTech"
+              >
+                <img
+                  src="/logo-esaystech.png"
+                  alt="EasyTech"
+                  className="w-6 h-6 object-contain opacity-60 group-hover:opacity-100 transition-opacity"
+                />
+                <span>
+                  Desarrollado por{' '}
+                  <span className="font-bold tracking-wide group-hover:text-white transition-colors">
+                    EasyTech
+                  </span>
+                </span>
+              </a>
+              <div className="h-px w-16 bg-gradient-to-l from-transparent to-gray-700" />
+            </div>
             
             {/* Botón discreto de acceso al admin */}
             <button
               onClick={() => navigate('/admin-login')}
-              className="mt-4 text-xs text-gray-600 hover:text-tincho-gold 
+              className="mt-3 text-xs text-gray-600 hover:text-tincho-gold 
                        transition-all duration-300 inline-flex items-center gap-1
                        opacity-50 hover:opacity-100"
               title="Acceso Administrador"

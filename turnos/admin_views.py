@@ -150,8 +150,17 @@ def marcar_turno_realizado(request, turno_id):
             {'error': f'El turno ya está en estado: {turno.estado}'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
+    hoy = timezone.localdate()
+    if turno.fecha > hoy:
+        return Response(
+            {'error': f'No se puede marcar un turno futuro como realizado. El turno es el {turno.fecha.strftime("%d/%m/%Y")}.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    metodo_pago = request.data.get('metodo_pago', 'EFECTIVO')
     turno.estado = 'REALIZADO'
+    turno.metodo_pago = metodo_pago
     turno.save()
     
     data = TurnoSerializer(turno).data

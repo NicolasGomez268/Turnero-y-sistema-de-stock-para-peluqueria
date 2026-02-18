@@ -5,10 +5,10 @@ const AdminCaja = () => {
   const [pestanaActiva, setPestanaActiva] = useState('caja'); // caja, liquidacion, metricas
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-3 sm:p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-3xl font-bold text-white mb-2">
+        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
           Caja y Liquidación
         </h2>
         <p className="text-gray-400">
@@ -17,10 +17,10 @@ const AdminCaja = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-4 mb-6 border-b border-gray-700">
+      <div className="flex gap-1 sm:gap-4 mb-6 border-b border-gray-700 overflow-x-auto">
         <button
           onClick={() => setPestanaActiva('caja')}
-          className={`px-6 py-3 font-semibold transition-all duration-200 border-b-2
+          className={`px-4 sm:px-6 py-3 font-semibold transition-all duration-200 border-b-2 whitespace-nowrap text-sm sm:text-base shrink-0
                      ${pestanaActiva === 'caja'
                        ? 'text-white border-white'
                        : 'text-gray-400 border-transparent hover:text-gray-300'}`}
@@ -29,7 +29,7 @@ const AdminCaja = () => {
         </button>
         <button
           onClick={() => setPestanaActiva('liquidacion')}
-          className={`px-6 py-3 font-semibold transition-all duration-200 border-b-2
+          className={`px-4 sm:px-6 py-3 font-semibold transition-all duration-200 border-b-2 whitespace-nowrap text-sm sm:text-base shrink-0
                      ${pestanaActiva === 'liquidacion'
                        ? 'text-white border-white'
                        : 'text-gray-400 border-transparent hover:text-gray-300'}`}
@@ -38,7 +38,7 @@ const AdminCaja = () => {
         </button>
         <button
           onClick={() => setPestanaActiva('metricas')}
-          className={`px-6 py-3 font-semibold transition-all duration-200 border-b-2
+          className={`px-4 sm:px-6 py-3 font-semibold transition-all duration-200 border-b-2 whitespace-nowrap text-sm sm:text-base shrink-0
                      ${pestanaActiva === 'metricas'
                        ? 'text-white border-white'
                        : 'text-gray-400 border-transparent hover:text-gray-300'}`}
@@ -94,7 +94,7 @@ const CajaDiariaTab = () => {
   return (
     <div className="space-y-6">
       {/* Selector de Fecha */}
-      <div className="flex items-center gap-4 bg-gray-800 p-4 rounded-lg">
+      <div className="flex flex-wrap items-center gap-3 bg-gray-800 p-4 rounded-lg">
         <label className="text-gray-300 font-semibold">Fecha:</label>
         <input
           type="date"
@@ -112,53 +112,78 @@ const CajaDiariaTab = () => {
       </div>
 
       {/* Métricas principales */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
         {/* Total Turnos */}
-        <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg p-6 shadow-lg">
-          <p className="text-blue-100 text-sm font-semibold mb-1">Turnos Realizados</p>
-          <p className="text-3xl font-bold text-white">{datos.turnos.cantidad}</p>
-          <p className="text-blue-200 text-sm mt-2">
+        <div className="bg-gray-800 border-l-4 border-blue-500 rounded-lg p-4 sm:p-6 shadow-lg">
+          <p className="text-gray-400 text-sm font-semibold mb-1">Turnos Realizados</p>
+          <p className="text-2xl sm:text-3xl font-bold text-white">{datos.turnos.cantidad}</p>
+          <p className="text-gray-500 text-sm mt-2">
             ${datos.turnos.total.toLocaleString('es-AR')}
           </p>
         </div>
 
         {/* Total Ventas Productos */}
-        <div className="bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg p-6 shadow-lg">
-          <p className="text-purple-100 text-sm font-semibold mb-1">Ventas de Productos</p>
-          <p className="text-3xl font-bold text-white">{datos.ventas_productos.cantidad}</p>
-          <p className="text-purple-200 text-sm mt-2">
+        <div className="bg-gray-800 border-l-4 border-purple-500 rounded-lg p-4 sm:p-6 shadow-lg">
+          <p className="text-gray-400 text-sm font-semibold mb-1">Ventas de Productos</p>
+          <p className="text-2xl sm:text-3xl font-bold text-white">{datos.ventas_productos.cantidad}</p>
+          <p className="text-gray-500 text-sm mt-2">
             ${datos.ventas_productos.total.toLocaleString('es-AR')}
           </p>
         </div>
 
         {/* Total General */}
-        <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-lg p-6 shadow-lg">
-          <p className="text-green-100 text-sm font-semibold mb-1">Total del Día</p>
-          <p className="text-4xl font-bold text-white">
+        <div className="admin-metric-gold rounded-lg p-6 shadow-lg">
+          <p className="text-black/70 text-sm font-semibold mb-1">Total del Día</p>
+          <p className="text-3xl sm:text-4xl font-bold text-black">
             ${datos.total_general.toLocaleString('es-AR')}
           </p>
         </div>
       </div>
 
-      {/* Desglose por método de pago */}
+      {/* Desglose por método de pago — Turnos */}
       <div className="bg-gray-800 rounded-lg p-6">
-        <h3 className="text-xl font-bold text-white mb-4">
-          Desglose por Método de Pago (Ventas de Productos)
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-gray-900 rounded-lg p-4">
+        <h3 className="text-xl font-bold text-white mb-1">Desglose por Método de Pago</h3>
+        <p className="text-gray-400 text-sm mb-4">Turnos / Servicios</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          <div className="bg-gray-900 border-l-4 border-green-500 rounded-lg p-4">
+            <p className="text-gray-400 text-sm mb-1">Efectivo</p>
+            <p className="text-2xl font-bold text-white">
+              ${(datos.desglose_turnos_metodos_pago?.EFECTIVO ?? 0).toLocaleString('es-AR')}
+            </p>
+          </div>
+          <div className="bg-gray-900 border-l-4 border-blue-500 rounded-lg p-4">
+            <p className="text-gray-400 text-sm mb-1">Transferencia</p>
+            <p className="text-2xl font-bold text-white">
+              ${(datos.desglose_turnos_metodos_pago?.TRANSFERENCIA ?? 0).toLocaleString('es-AR')}
+            </p>
+          </div>
+          <div className="bg-gray-900 border-l-4 border-purple-500 rounded-lg p-4">
+            <p className="text-gray-400 text-sm mb-1">Tarjeta</p>
+            <p className="text-2xl font-bold text-white">
+              ${(datos.desglose_turnos_metodos_pago?.TARJETA ?? 0).toLocaleString('es-AR')}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Desglose por método de pago — Productos */}
+      <div className="bg-gray-800 rounded-lg p-6">
+        <h3 className="text-xl font-bold text-white mb-1">Desglose por Método de Pago</h3>
+        <p className="text-gray-400 text-sm mb-4">Ventas de Productos</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          <div className="bg-gray-900 border-l-4 border-green-500 rounded-lg p-4">
             <p className="text-gray-400 text-sm mb-1">Efectivo</p>
             <p className="text-2xl font-bold text-white">
               ${datos.desglose_metodos_pago.EFECTIVO.toLocaleString('es-AR')}
             </p>
           </div>
-          <div className="bg-gray-900 rounded-lg p-4">
+          <div className="bg-gray-900 border-l-4 border-blue-500 rounded-lg p-4">
             <p className="text-gray-400 text-sm mb-1">Transferencia</p>
             <p className="text-2xl font-bold text-white">
               ${datos.desglose_metodos_pago.TRANSFERENCIA.toLocaleString('es-AR')}
             </p>
           </div>
-          <div className="bg-gray-900 rounded-lg p-4">
+          <div className="bg-gray-900 border-l-4 border-purple-500 rounded-lg p-4">
             <p className="text-gray-400 text-sm mb-1">Tarjeta</p>
             <p className="text-2xl font-bold text-white">
               ${datos.desglose_metodos_pago.TARJETA.toLocaleString('es-AR')}
@@ -309,44 +334,44 @@ const LiquidacionTab = () => {
       </div>
 
       {/* Resumen general */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg p-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+        <div className="bg-gray-800 border-l-4 border-gray-600 rounded-lg p-4 sm:p-6">
           <p className="text-gray-400 text-sm mb-1">Ingresos Brutos</p>
-          <p className="text-3xl font-bold text-white">
+          <p className="text-2xl sm:text-3xl font-bold text-white">
             ${datos.resumen_general.total_ingresos_brutos.toLocaleString('es-AR')}
           </p>
         </div>
-        <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-lg p-6">
-          <p className="text-green-100 text-sm mb-1">Total para Barberos</p>
-          <p className="text-3xl font-bold text-white">
+        <div className="bg-gray-800 border-l-4 border-green-500 rounded-lg p-4 sm:p-6">
+          <p className="text-gray-400 text-sm mb-1">Total para Barberos</p>
+          <p className="text-2xl sm:text-3xl font-bold text-white">
             ${datos.resumen_general.total_para_barberos.toLocaleString('es-AR')}
           </p>
         </div>
         <div className="admin-metric-gold rounded-lg p-6">
           <p className="text-black text-sm mb-1">Total para la Casa</p>
-          <p className="text-3xl font-bold text-black">
+          <p className="text-2xl sm:text-3xl font-bold text-black">
             ${datos.resumen_general.total_para_casa.toLocaleString('es-AR')}
           </p>
         </div>
       </div>
 
       {/* Tabla de liquidaciones */}
-      <div className="bg-gray-800 rounded-lg overflow-hidden">
-        <table className="w-full">
+      <div className="bg-gray-800 rounded-lg overflow-x-auto">
+        <table className="w-full min-w-[540px]">
           <thead className="bg-gray-900">
             <tr>
-              <th className="px-6 py-4 text-left text-white font-bold">Barbero</th>
-              <th className="px-6 py-4 text-center text-white font-bold">Turnos</th>
-              <th className="px-6 py-4 text-right text-white font-bold">Total Bruto</th>
-              <th className="px-6 py-4 text-center text-white font-bold">% Barbero</th>
-              <th className="px-6 py-4 text-right text-white font-bold">A Pagar</th>
-              <th className="px-6 py-4 text-right text-white font-bold">Para la Casa</th>
+              <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-white font-bold text-sm">Barbero</th>
+              <th className="px-3 sm:px-6 py-3 sm:py-4 text-center text-white font-bold text-sm">Turnos</th>
+              <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-white font-bold text-sm">Total Bruto</th>
+              <th className="px-3 sm:px-6 py-3 sm:py-4 text-center text-white font-bold text-sm">% Barbero</th>
+              <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-white font-bold text-sm">A Pagar</th>
+              <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-white font-bold text-sm">Para la Casa</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
             {datos.liquidaciones.map((liq) => (
               <tr key={liq.barbero_id} className="hover:bg-gray-750 transition-colors">
-                <td className="px-6 py-4 text-white font-semibold">
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-white font-semibold text-sm">
                   {liq.barbero_nombre}
                   {liq.es_dueno && (
                     <span className="ml-2 text-xs bg-tincho-gold text-tincho-dark px-2 py-1 rounded">
@@ -354,15 +379,15 @@ const LiquidacionTab = () => {
                     </span>
                   )}
                 </td>
-                <td className="px-6 py-4 text-center text-gray-300">{liq.cantidad_turnos}</td>
-                <td className="px-6 py-4 text-right text-gray-300">
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-center text-gray-300 text-sm">{liq.cantidad_turnos}</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-right text-gray-300 text-sm">
                   ${liq.total_bruto.toLocaleString('es-AR')}
                 </td>
-                <td className="px-6 py-4 text-center text-gray-300">{liq.porcentaje_barbero}%</td>
-                <td className="px-6 py-4 text-right text-green-400 font-bold">
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-center text-gray-300 text-sm">{liq.porcentaje_barbero}%</td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-right text-green-400 font-bold text-sm">
                   ${liq.comision_barbero.toLocaleString('es-AR')}
                 </td>
-                <td className="px-6 py-4 text-right text-white font-bold">
+                <td className="px-3 sm:px-6 py-3 sm:py-4 text-right text-white font-bold text-sm">
                   ${liq.comision_casa.toLocaleString('es-AR')}
                 </td>
               </tr>
@@ -419,7 +444,7 @@ const MetricasTab = () => {
   return (
     <div className="space-y-6">
       {/* Selector de mes/año */}
-      <div className="flex items-center gap-4 bg-gray-800 p-4 rounded-lg">
+      <div className="flex flex-wrap items-center gap-3 bg-gray-800 p-4 rounded-lg">
         <label className="text-gray-300 font-semibold">Mes:</label>
         <select
           value={mes}
@@ -449,28 +474,28 @@ const MetricasTab = () => {
       </div>
 
       {/* Métricas principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Total Turnos */}
-        <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg p-6">
-          <p className="text-blue-100 text-sm font-semibold mb-1">Total de Turnos</p>
-          <p className="text-4xl font-bold text-white">{datos.resumen.total_turnos_realizados}</p>
-          <p className="text-blue-200 text-sm mt-2">
+        <div className="bg-gray-800 border-l-4 border-blue-500 rounded-lg p-4 sm:p-6">
+          <p className="text-gray-400 text-sm font-semibold mb-1">Total de Turnos</p>
+          <p className="text-3xl sm:text-4xl font-bold text-white">{datos.resumen.total_turnos_realizados}</p>
+          <p className="text-gray-500 text-sm mt-2">
             ${datos.resumen.ingresos_turnos.toLocaleString('es-AR')}
           </p>
         </div>
 
         {/* Total Ventas Productos */}
-        <div className="bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg p-6">
-          <p className="text-purple-100 text-sm font-semibold mb-1">Ventas de Productos</p>
-          <p className="text-4xl font-bold text-white">
+        <div className="bg-gray-800 border-l-4 border-purple-500 rounded-lg p-4 sm:p-6">
+          <p className="text-gray-400 text-sm font-semibold mb-1">Ventas de Productos</p>
+          <p className="text-3xl sm:text-4xl font-bold text-white">
             ${datos.resumen.total_ventas_productos.toLocaleString('es-AR')}
           </p>
         </div>
 
         {/* Ganancia Total */}
-        <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-lg p-6">
-          <p className="text-green-100 text-sm font-semibold mb-1">Ganancia Total</p>
-          <p className="text-4xl font-bold text-white">
+        <div className="admin-metric-gold rounded-lg p-6">
+          <p className="text-black/70 text-sm font-semibold mb-1">Ganancia Total</p>
+          <p className="text-3xl sm:text-4xl font-bold text-black">
             ${datos.resumen.ganancia_total.toLocaleString('es-AR')}
           </p>
         </div>
@@ -485,10 +510,10 @@ const MetricasTab = () => {
         </div>
 
         {/* Servicio Más Solicitado */}
-        <div className="bg-gradient-to-br from-orange-600 to-orange-700 rounded-lg p-6 md:col-span-2">
-          <p className="text-orange-100 text-sm font-semibold mb-1">Servicio Más Solicitado</p>
+        <div className="bg-gray-800 border-l-4 border-orange-500 rounded-lg p-4 sm:p-6 col-span-2 lg:col-span-2">
+          <p className="text-gray-400 text-sm font-semibold mb-1">Servicio Más Solicitado</p>
           <p className="text-2xl font-bold text-white">{datos.servicio_mas_solicitado.nombre}</p>
-          <p className="text-orange-200 text-sm mt-1">
+          <p className="text-gray-500 text-sm mt-1">
             {datos.servicio_mas_solicitado.cantidad} veces
           </p>
         </div>

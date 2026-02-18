@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Pagination from '../components/Pagination';
 import TurnoAdminCard from '../components/TurnoAdminCard';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import api from '../services/api';
+
+const TURNOS_POR_PAGINA = 10;
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -24,6 +27,7 @@ const AdminDashboard = () => {
   );
   const [filtroEstado, setFiltroEstado] = useState('TODOS'); // TODOS, PENDIENTE, REALIZADO
   const [modalNuevoTurno, setModalNuevoTurno] = useState(false);
+  const [paginaTurnos, setPaginaTurnos] = useState(1);
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -84,13 +88,10 @@ const AdminDashboard = () => {
     }));
   };
 
-  const handleMarcarAsistio = async (turnoId) => {
-    const confirmed = await notification.confirm('¿Confirmar que el cliente asistió?');
-    if (!confirmed) return;
-
+  const handleMarcarAsistio = async (turnoId, metodoPago) => {
     setActionLoading(true);
     try {
-      await api.marcarTurnoRealizado(turnoId);
+      await api.marcarTurnoRealizado(turnoId, metodoPago);
       await cargarDatos();
       notification.success('✅ Turno marcado como realizado');
     } catch (err) {
@@ -144,20 +145,19 @@ const AdminDashboard = () => {
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
       {/* Métricas Rápidas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-2 gap-4 sm:gap-6 mb-8">
           {/* Turnos del Día */}
-          <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg p-6 
-                        shadow-lg border border-blue-500">
+          <div className="bg-gray-800 border-l-4 border-blue-500 rounded-lg p-4 sm:p-6 shadow-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm font-semibold mb-1">
+                <p className="text-gray-400 text-sm font-semibold mb-1">
                   {obtenerLabelFecha()}
                 </p>
-                <p className="text-3xl font-bold text-white">
+                <p className="text-2xl sm:text-3xl font-bold text-white">
                   {metricas.turnosHoy}
                 </p>
               </div>
-              <div className="text-5xl opacity-20">📅</div>
+              <div className="text-4xl sm:text-5xl opacity-20">📅</div>
             </div>
           </div>
 
@@ -189,48 +189,48 @@ const AdminDashboard = () => {
         </div>
 
         {/* Selector de Fecha */}
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-white">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <h2 className="text-xl sm:text-2xl font-bold text-white">
             Agenda del Día
           </h2>
           
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <button
               onClick={() => setModalNuevoTurno(true)}
-              className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white 
+              className="px-4 sm:px-6 py-2 bg-oro-base hover:bg-oro-brillo text-tincho-dark
                        font-bold rounded-lg transition-all duration-200 
                        flex items-center gap-2 shadow-lg"
             >
               ➕ Nueva Reserva
             </button>
             
-            <label className="text-gray-400">Estado:</label>
+            <label className="text-gray-400 text-sm">Estado:</label>
             <select
               value={filtroEstado}
-              onChange={(e) => setFiltroEstado(e.target.value)}
-              className="px-4 py-2 admin-input-gold rounded-lg 
-                       text-gray-200 cursor-pointer"
+              onChange={(e) => { setFiltroEstado(e.target.value); setPaginaTurnos(1); }}
+              className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg 
+                       text-gray-200 cursor-pointer text-sm focus:outline-none
+                       focus:border-tincho-gold focus:ring-2 focus:ring-tincho-gold/50"
             >
-              <option value="TODOS">Todos</option>
-              <option value="PENDIENTE">Pendientes</option>
-              <option value="REALIZADO">Realizados</option>
-              <option value="CANCELADO">Cancelados</option>
+              <option value="TODOS" className="bg-gray-800 text-gray-200">Todos</option>
+              <option value="PENDIENTE" className="bg-gray-800 text-gray-200">Pendientes</option>
+              <option value="REALIZADO" className="bg-gray-800 text-gray-200">Realizados</option>
+              <option value="CANCELADO" className="bg-gray-800 text-gray-200">Cancelados</option>
             </select>
             
-            <label className="text-gray-400">Fecha:</label>
             <input
               type="date"
               value={fechaSeleccionada}
               onChange={(e) => setFechaSeleccionada(e.target.value)}
-              className="px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg 
+              className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg 
                        text-gray-200 focus:outline-none focus:border-tincho-gold
-                       focus:ring-2 focus:ring-tincho-gold/50"
+                       focus:ring-2 focus:ring-tincho-gold/50 text-sm"
             />
             
             <button
               onClick={cargarDatos}
-              className="px-4 py-2 bg-oro-base text-tincho-dark font-bold 
-                       rounded-lg hover:bg-oro-brillo transition-all duration-200"
+              className="px-3 py-2 bg-oro-base text-tincho-dark font-bold 
+                       rounded-lg hover:bg-oro-brillo transition-all duration-200 text-sm"
             >
               Actualizar
             </button>
@@ -259,10 +259,14 @@ const AdminDashboard = () => {
         ) : (
           /* Lista de Turnos */
           (() => {
-            // Filtrar turnos según el estado seleccionado
-            const turnosFiltrados = filtroEstado === 'TODOS' 
-              ? turnos 
+            const turnosFiltrados = filtroEstado === 'TODOS'
+              ? turnos
               : turnos.filter(t => t.estado === filtroEstado);
+
+            const turnosPaginados = turnosFiltrados.slice(
+              (paginaTurnos - 1) * TURNOS_POR_PAGINA,
+              paginaTurnos * TURNOS_POR_PAGINA,
+            );
 
             return turnosFiltrados.length === 0 ? (
               <div className="text-center py-12 bg-gray-800 rounded-lg border border-gray-700">
@@ -271,16 +275,24 @@ const AdminDashboard = () => {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {turnosFiltrados.map((turno) => (
-                  <TurnoAdminCard
-                    key={turno.id}
-                    turno={turno}
-                    onMarcarAsistio={handleMarcarAsistio}
-                    onCancelar={handleCancelar}
-                    loading={actionLoading}
-                  />
-                ))}
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {turnosPaginados.map((turno) => (
+                    <TurnoAdminCard
+                      key={turno.id}
+                      turno={turno}
+                      onMarcarAsistio={handleMarcarAsistio}
+                      onCancelar={handleCancelar}
+                      loading={actionLoading}
+                    />
+                  ))}
+                </div>
+                <Pagination
+                  paginaActual={paginaTurnos}
+                  totalItems={turnosFiltrados.length}
+                  itemsPorPagina={TURNOS_POR_PAGINA}
+                  onCambiarPagina={setPaginaTurnos}
+                />
               </div>
             );
           })()
@@ -434,19 +446,19 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
         </div>
 
         {/* Stepper */}
-        <div className="px-6 py-4 border-b border-gray-700">
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-700">
           <div className="flex items-center justify-between">
             {['Barbero', 'Servicio', 'Fecha/Hora', 'Cliente'].map((label, index) => (
               <div key={index} className="flex items-center">
-                <div className={`flex items-center justify-center w-10 h-10 rounded-full 
+                <div className={`flex items-center justify-center w-7 h-7 sm:w-10 sm:h-10 rounded-full text-sm sm:text-base
                               ${paso > index + 1 ? 'bg-green-600' : paso === index + 1 ? 'bg-tincho-gold' : 'bg-gray-700'}
                               ${paso >= index + 1 ? 'text-white' : 'text-gray-500'} font-bold`}>
                   {paso > index + 1 ? '✓' : index + 1}
                 </div>
-                <span className={`ml-2 text-sm ${paso >= index + 1 ? 'text-white' : 'text-gray-500'}`}>
+                <span className={`ml-1 sm:ml-2 text-xs sm:text-sm hidden xs:block ${paso >= index + 1 ? 'text-white' : 'text-gray-500'}`}>
                   {label}
                 </span>
-                {index <3 && <div className="w-12 h-0.5 bg-gray-700 mx-4" />}
+                {index < 3 && <div className="w-4 sm:w-12 h-0.5 bg-gray-700 mx-1 sm:mx-4" />}
               </div>
             ))}
           </div>
@@ -458,7 +470,7 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
           {paso === 1 && (
             <div>
               <h4 className="text-lg font-bold text-white mb-4">Seleccione el Barbero</h4>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {barberos.map(barbero => (
                   <div
                     key={barbero.id}
@@ -544,7 +556,7 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
                     No hay horarios disponibles para esta fecha
                   </p>
                 ) : (
-                  <div className="grid grid-cols-4 gap-2 max-h-60 overflow-y-auto">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-60 overflow-y-auto">
                     {slotsDisponibles.map((slot, index) => (
                       <button
                         key={index}
@@ -667,7 +679,7 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
             <button
               onClick={handleSubmit}
               disabled={!puedeAvanzar() || loading}
-              className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white 
+              className="px-6 py-2 bg-oro-base hover:bg-oro-brillo text-tincho-dark 
                        font-bold rounded-lg transition-colors disabled:opacity-50 
                        disabled:cursor-not-allowed"
             >

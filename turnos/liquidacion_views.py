@@ -158,18 +158,25 @@ def caja_diaria(request):
         total=Sum('total')
     )['total'] or Decimal('0')
     
-    # 3. DESGLOSE POR MÉTODO DE PAGO (solo de ventas de productos)
+    # 3. DESGLOSE POR MÉTODO DE PAGO — Ventas de productos
     desglose_metodos = {}
     for metodo_choice in ['EFECTIVO', 'TRANSFERENCIA', 'TARJETA']:
         total_metodo = ventas.filter(metodo_pago=metodo_choice).aggregate(
             total=Sum('total')
         )['total'] or Decimal('0')
-        
         desglose_metodos[metodo_choice] = float(total_metodo)
-    
-    # 4. TOTAL GENERAL
+
+    # 4. DESGLOSE POR MÉTODO DE PAGO — Turnos realizados
+    desglose_turnos_metodos = {}
+    for metodo_choice in ['EFECTIVO', 'TRANSFERENCIA', 'TARJETA']:
+        total_metodo = turnos_realizados.filter(metodo_pago=metodo_choice).aggregate(
+            total=Sum('servicio__precio')
+        )['total'] or Decimal('0')
+        desglose_turnos_metodos[metodo_choice] = float(total_metodo)
+
+    # 5. TOTAL GENERAL
     total_general = total_ingresos_turnos + total_ventas_productos
-    
+
     return Response({
         'fecha': str(fecha),
         'turnos': {
@@ -181,7 +188,8 @@ def caja_diaria(request):
             'total': float(total_ventas_productos)
         },
         'total_general': float(total_general),
-        'desglose_metodos_pago': desglose_metodos
+        'desglose_metodos_pago': desglose_metodos,
+        'desglose_turnos_metodos_pago': desglose_turnos_metodos,
     })
 
 

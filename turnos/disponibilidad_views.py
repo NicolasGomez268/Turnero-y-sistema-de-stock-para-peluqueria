@@ -97,9 +97,11 @@ class DisponibilidadView(APIView):
         slots = self._generar_slots_horario_personalizado(horario)
         
         # FILTRAR SLOTS PASADOS SI LA FECHA ES HOY
-        fecha_actual = timezone.now().date()
-        hora_actual = timezone.now().time()
-        
+        # Usar localtime() para comparar con la hora argentina, no UTC
+        ahora_local = timezone.localtime()
+        fecha_actual = ahora_local.date()
+        hora_actual = ahora_local.time()
+
         if fecha == fecha_actual:
             # Filtrar slots cuya hora de inicio ya pasó
             slots = [slot for slot in slots if slot['hora'] > hora_actual]

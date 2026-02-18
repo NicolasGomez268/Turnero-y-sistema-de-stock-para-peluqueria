@@ -13,6 +13,12 @@ class EstadoTurno(models.TextChoices):
     REALIZADO = 'REALIZADO', 'Realizado'
 
 
+class MetodoPagoTurno(models.TextChoices):
+    EFECTIVO      = 'EFECTIVO',      'Efectivo'
+    TRANSFERENCIA = 'TRANSFERENCIA', 'Transferencia'
+    TARJETA       = 'TARJETA',       'Tarjeta'
+
+
 class Barbero(models.Model):
     """
     Modelo para gestionar el staff de la barbería.
@@ -245,6 +251,15 @@ class Turno(models.Model):
         verbose_name='Estado'
     )
     
+    # Método de pago (se registra al marcar como REALIZADO)
+    metodo_pago = models.CharField(
+        max_length=20,
+        choices=MetodoPagoTurno.choices,
+        null=True,
+        blank=True,
+        verbose_name='Método de pago'
+    )
+
     # Notas adicionales
     notas = models.TextField(
         blank=True,

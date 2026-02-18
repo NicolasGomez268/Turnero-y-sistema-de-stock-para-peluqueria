@@ -160,9 +160,11 @@ const api = {
    * PATCH /api/admin/turnos/{id}/marcar-realizado/
    * @param {number} turnoId - ID del turno
    */
-  marcarTurnoRealizado: async (turnoId) => {
+  marcarTurnoRealizado: async (turnoId, metodoPago = 'EFECTIVO') => {
     try {
-      const response = await apiClient.patch(`/admin/turnos/${turnoId}/marcar-realizado/`);
+      const response = await apiClient.patch(`/admin/turnos/${turnoId}/marcar-realizado/`, {
+        metodo_pago: metodoPago,
+      });
       return response.data;
     } catch (error) {
       console.error('Error al marcar turno realizado:', error);
@@ -407,6 +409,133 @@ const api = {
       return response.data;
     } catch (error) {
       console.error('Error al obtener métricas mensuales:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+
+  // ===================================
+  // INVENTARIO — PRODUCTOS
+  // ===================================
+
+  /**
+   * Listar productos
+   * GET /api/inventario/productos/
+   * @param {Object} filtros - { activo, categoria, con_stock }
+   */
+  getProductos: async (filtros = {}) => {
+    try {
+      const response = await apiClient.get('/inventario/productos/', { params: filtros });
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener productos:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Crear producto
+   * POST /api/inventario/productos/
+   */
+  createProducto: async (data) => {
+    try {
+      const response = await apiClient.post('/inventario/productos/', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error al crear producto:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Actualizar producto
+   * PUT /api/inventario/productos/{id}/
+   */
+  updateProducto: async (id, data) => {
+    try {
+      const response = await apiClient.put(`/inventario/productos/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Error al actualizar producto:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Eliminar producto
+   * DELETE /api/inventario/productos/{id}/
+   */
+  deleteProducto: async (id) => {
+    try {
+      const response = await apiClient.delete(`/inventario/productos/${id}/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error al eliminar producto:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Ajustar stock de un producto
+   * PATCH /api/inventario/productos/{id}/stock/
+   * @param {number} id - ID del producto
+   * @param {number} cantidad - Cantidad a ajustar
+   * @param {string} operacion - "agregar" | "restar" | "establecer"
+   */
+  ajustarStock: async (id, cantidad, operacion = 'agregar') => {
+    try {
+      const response = await apiClient.patch(`/inventario/productos/${id}/stock/`, { cantidad, operacion });
+      return response.data;
+    } catch (error) {
+      console.error('Error al ajustar stock:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Obtener categorías únicas
+   * GET /api/inventario/categorias/
+   */
+  getCategorias: async () => {
+    try {
+      const response = await apiClient.get('/inventario/categorias/');
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener categorías:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  // ===================================
+  // INVENTARIO — VENTAS
+  // ===================================
+
+  /**
+   * Listar ventas con resumen
+   * GET /api/inventario/ventas/
+   * @param {Object} filtros - { fecha, fecha_inicio, fecha_fin, producto_id }
+   */
+  getVentas: async (filtros = {}) => {
+    try {
+      const response = await apiClient.get('/inventario/ventas/', { params: filtros });
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener ventas:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Registrar una venta (descuenta stock automáticamente)
+   * POST /api/inventario/ventas/
+   * @param {Object} data - { producto, cantidad, precio_unitario, metodo_pago, vendedor, notas }
+   */
+  registrarVenta: async (data) => {
+    try {
+      const response = await apiClient.post('/inventario/ventas/', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error al registrar venta:', error);
       throw error.response?.data || error;
     }
   },

@@ -278,7 +278,7 @@ export default function ServiciosAdmin() {
               </div>
 
               {/* Precio y Duración */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-white font-bold mb-2">
                     Precio ($) <span className="text-red-500">*</span>
