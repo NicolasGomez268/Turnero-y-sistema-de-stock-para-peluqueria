@@ -27,18 +27,21 @@ class BarberoSerializer(serializers.ModelSerializer):
 
 class HorarioAtencionSerializer(serializers.ModelSerializer):
     """Serializer para el modelo HorarioAtencion"""
+    barbero_nombre = serializers.CharField(source='barbero.nombre', read_only=True)
+    dia_semana_display = serializers.CharField(source='get_dia_semana_display', read_only=True)
     
     class Meta:
         model = HorarioAtencion
         fields = [
             'id',
             'barbero',
+            'barbero_nombre',
             'dia_semana',
+            'dia_semana_display',
             'hora_inicio',
             'hora_fin',
             'descanso_inicio',
             'descanso_fin',
-            'is_active'
         ]
 
 
@@ -171,7 +174,6 @@ class TurnoAdminSerializer(serializers.ModelSerializer):
             'creado_en',
         ]
         read_only_fields = ['creado_en']
-
 
 
 class LiquidacionBarberoSerializer(serializers.Serializer):

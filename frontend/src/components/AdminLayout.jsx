@@ -2,23 +2,27 @@ import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useNotification } from '../context/NotificationContext';
 
 const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const notification = useNotification();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const menuItems = [
-    { id: 'agenda', label: 'Agenda', icon: '📅', path: '/admin-dashboard' },
-    { id: 'barberos', label: 'Equipo', icon: '💈', path: '/admin-barberos' },
-    { id: 'servicios', label: 'Servicios', icon: '✂️', path: '/admin-servicios' },
-    { id: 'stock', label: 'Stock', icon: '👕', path: '/admin-stock' },
-    { id: 'caja', label: 'Caja', icon: '💰', path: '/admin-caja' },
+    { id: 'agenda', label: 'Agenda', path: '/admin-dashboard' },
+    { id: 'barberos', label: 'Equipo', path: '/admin-barberos' },
+    { id: 'servicios', label: 'Servicios', path: '/admin-servicios' },
+    { id: 'stock', label: 'Stock', path: '/admin-stock' },
+    { id: 'caja', label: 'Caja', path: '/admin-caja' },
+    { id: 'logout', label: 'Cerrar Sesión', action: 'logout' },
   ];
 
-  const handleLogout = () => {
-    if (confirm('¿Cerrar sesión?')) {
+  const handleLogout = async () => {
+    const confirmed = await notification.confirm('¿Deseas cerrar sesión?', 'Confirmar cierre de sesión');
+    if (confirmed) {
       logout();
       navigate('/');
     }
@@ -27,19 +31,32 @@ const AdminLayout = () => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <div className="min-h-screen bg-tincho-dark flex">
+    <div className="min-h-screen bg-black flex">
       {/* SIDEBAR */}
       <aside 
         className={`bg-gray-900 border-r border-gray-800 transition-all duration-300 
-                    ${sidebarOpen ? 'w-64' : 'w-20'} flex flex-col`}
+                    ${sidebarOpen ? 'w-48' : 'w-20'} flex flex-col`}
       >
         {/* Logo Header */}
-        <div className="p-4 border-b border-gray-800">
+        <div className="p-3 border-b border-gray-800">
           <div className="flex items-center justify-between">
             {sidebarOpen ? (
-              <h2 className="text-2xl font-bold text-tincho-gold">TINCHO</h2>
+              <div className="flex items-center gap-2">
+                <img 
+                  src="/logotincho.png" 
+                  alt="TINCHO" 
+                  className="w-8 h-8 mix-blend-lighten opacity-95"
+                />
+                <div>
+                  <p className="text-xs text-gray-400">Panel Admin</p>
+                </div>
+              </div>
             ) : (
-              <div className="text-2xl">✂️</div>
+              <img 
+                src="/logotincho.png" 
+                alt="TINCHO" 
+                className="w-10 h-10 mix-blend-lighten opacity-95"
+              />
             )}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -48,9 +65,6 @@ const AdminLayout = () => {
               {sidebarOpen ? '◀' : '▶'}
             </button>
           </div>
-          {sidebarOpen && (
-            <p className="text-xs text-gray-500 mt-1">Panel Admin</p>
-          )}
         </div>
 
         {/* Navigation Menu */}
@@ -58,86 +72,26 @@ const AdminLayout = () => {
           {menuItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => navigate(item.path)}
-              className={`w-full px-4 py-3 flex items-center gap-3 transition-all
-                       ${isActive(item.path)
-                         ? 'bg-tincho-gold text-tincho-dark font-bold'
-                         : 'text-gray-400 hover:bg-gray-800 hover:text-tincho-gold'
+              onClick={() => item.action === 'logout' ? handleLogout() : navigate(item.path)}
+              className={`w-full px-3 py-2.5 flex items-center justify-start transition-all duration-300
+                       ${item.action === 'logout'
+                         ? 'text-gray-400 hover:bg-red-900 hover:text-white'
+                         : isActive(item.path)
+                         ? 'bg-oro-base text-tincho-dark font-bold shadow-lg shadow-oro-base/50 border-l-4 border-black scale-105'
+                         : 'text-gray-400 hover:bg-gray-800 hover:text-oro-base hover:border-l-2 hover:border-black'
                        }`}
               title={!sidebarOpen ? item.label : ''}
             >
-              <span className="text-2xl">{item.icon}</span>
-              {sidebarOpen && <span className="text-sm">{item.label}</span>}
+              <span className="text-sm">{item.label}</span>
             </button>
           ))}
         </nav>
-
-        {/* User Info & Logout */}
-        <div className="p-4 border-t border-gray-800">
-          {sidebarOpen ? (
-            <>
-              <div className="mb-3">
-                <p className="text-xs text-gray-500">Conectado como:</p>
-                <p className="text-sm text-gray-300 font-semibold">
-                  {user?.username}
-                </p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="w-full py-2 px-4 bg-gray-800 hover:bg-red-600 
-                         text-gray-300 hover:text-white rounded-lg transition-all
-                         text-sm font-semibold"
-              >
-                Cerrar Sesión
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={handleLogout}
-              className="text-gray-400 hover:text-red-500 transition-colors text-2xl"
-              title="Cerrar Sesión"
-            >
-              🚪
-            </button>
-          )}
-        </div>
       </aside>
 
       {/* MAIN CONTENT */}
-      <div className="flex-1 flex flex-col min-h-screen">
-        {/* Top Header */}
-        <header className="bg-gray-900 border-b border-gray-800 px-6 py-4 sticky top-0 z-10">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-tincho-gold">
-                {menuItems.find(item => isActive(item.path))?.label || 'Panel'}
-              </h1>
-              <p className="text-xs text-gray-500">
-                {new Date().toLocaleDateString('es-AR', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </p>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-xs text-gray-500">Usuario</p>
-                <p className="text-sm text-gray-300 font-semibold">
-                  👤 {user?.username}
-                </p>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Content Area */}
-        <main className="flex-1 overflow-y-auto">
-          <Outlet />
-        </main>
-      </div>
+      <main className="flex-1 min-h-screen overflow-y-auto">
+        <Outlet />
+      </main>
     </div>
   );
 };

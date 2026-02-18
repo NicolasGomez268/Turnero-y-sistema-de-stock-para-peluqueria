@@ -13,7 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime, timedelta
 from rest_framework.authtoken.models import Token
 from .models import Turno, Barbero, Servicio, EstadoTurno
-from .serializers import TurnoAdminSerializer
+from .serializers import TurnoSerializer
 
 
 @csrf_exempt
@@ -304,7 +304,7 @@ def crear_turno_manual(request):
         barbero=barbero,
         fecha=fecha,
         hora=hora,
-        estado__in=[EstadoTurno.PENDIENTE, EstadoTurno.CONFIRMADO]
+        estado=EstadoTurno.PENDIENTE
     ).exists()
     
     if turno_existente:
@@ -313,7 +313,7 @@ def crear_turno_manual(request):
             status=status.HTTP_409_CONFLICT
         )
     
-    # Crear el turno con estado CONFIRMADO
+    # Crear el turno con estado PENDIENTE
     try:
         turno = Turno.objects.create(
             barbero=barbero,
@@ -323,10 +323,10 @@ def crear_turno_manual(request):
             cliente_nombre=cliente_nombre,
             cliente_telefono=cliente_telefono,
             notas=notas,
-            estado=EstadoTurno.CONFIRMADO  # Confirmado automáticamente
+            estado=EstadoTurno.PENDIENTE  # Pendiente para poder marcarlo como realizado después
         )
         
-        serializer = TurnoAdminSerializer(turno)
+        serializer = TurnoSerializer(turno)
         
         return Response({
             'message': 'Turno creado exitosamente',

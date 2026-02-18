@@ -2,28 +2,242 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Variables de color dorado metálico premium */
+:root {
+  --oro-brillo: #F2E387;
+  --oro-base: #D4B34F;
+  --oro-sombra: #8C6A1D;
+  --gradiente-oro-metalico: linear-gradient(135deg, #F2E387 0%, #D4B34F 50%, #8C6A1D 100%);
+  
+  /* Dorado fuerte para admin panel */
+  --oro-fuerte: #FFB800;
+  --oro-brillante: #FFC933;
+  --gradiente-admin-gold: linear-gradient(135deg, #FFB800 0%, #D4A028 40%, #1a1a1a 100%);
+  --gradiente-admin-gold-vertical: linear-gradient(180deg, #FFB800 0%, #D4A028 30%, #0a0a0a 100%);
+  --gradiente-admin-card: linear-gradient(135deg, rgba(255, 184, 0, 0.15) 0%, rgba(26, 26, 26, 0.95) 100%);
+}
+
 /* Estilos base personalizados */
 @layer base {
   body {
-    @apply bg-tincho-dark text-barber-white;
+    @apply bg-black text-barber-white;
   }
 }
 
 /* Componentes personalizados */
 @layer components {
   .btn-primary {
-    @apply bg-tincho-gold text-tincho-dark font-bold px-6 py-3 rounded-lg 
-           hover:bg-yellow-500 transition-all duration-300 shadow-lg 
-           hover:shadow-xl transform hover:scale-105;
+    @apply bg-oro-base text-tincho-dark font-bold px-6 py-3 rounded-xl 
+           hover:bg-oro-brillo transition-all duration-300 shadow-xl 
+           shadow-oro-base/40 hover:shadow-2xl hover:shadow-oro-brillo/60
+           transform hover:scale-105;
   }
   
   .btn-secondary {
-    @apply bg-gray-700 text-barber-white font-bold px-6 py-3 rounded-lg 
-           hover:bg-gray-600 transition-all duration-300;
+    @apply bg-gray-700 text-barber-white font-bold px-6 py-3 rounded-xl 
+           hover:bg-gray-600 transition-all duration-300 shadow-lg
+           hover:shadow-xl;
   }
   
   .card {
-    @apply bg-gray-800 rounded-xl shadow-xl p-6 border border-gray-700 
-           hover:border-tincho-gold transition-all duration-300;
+    @apply bg-gray-900/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 
+           border-2 border-gray-800 hover:border-gray-700 
+           transition-all duration-300;
+  }
+}
+
+/* Animaciones para notificaciones */
+@layer utilities {
+  /* Clases de oro metálico */
+  .texto-oro-metalico {
+    background: var(--gradiente-oro-metalico);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: bold;
+  }
+
+  .borde-oro-metalico {
+    border: 2px solid transparent;
+    background-image: var(--gradiente-oro-metalico);
+    background-origin: border-box;
+    background-clip: border-box;
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+
+  .fondo-oro-solido {
+    background-color: var(--oro-base);
+    transition: background-color 0.3s ease;
+  }
+
+  .fondo-oro-solido:hover {
+    background-color: var(--oro-brillo);
+  }
+
+  /* === ESTILOS ELEGANTES ADMIN PANEL === */
+  
+  /* Header Admin con degradado dorado fuerte */
+  .admin-header-gradient {
+    background: var(--gradiente-admin-gold);
+    box-shadow: 0 4px 20px rgba(255, 184, 0, 0.3),
+                0 8px 40px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Cards Admin con degradado sutil */
+  .admin-card-dark-gold {
+    background: var(--gradiente-admin-card);
+    border: 1px solid rgba(255, 184, 0, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 184, 0, 0.1);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+  }
+
+  .admin-card-dark-gold:hover {
+    border-color: rgba(255, 184, 0, 0.4);
+    box-shadow: 0 6px 25px rgba(255, 184, 0, 0.15),
+                0 10px 40px rgba(0, 0, 0, 0.5);
+    transform: translateY(-2px);
+  }
+
+  /* Inputs Admin con borde dorado */
+  .admin-input-gold {
+    background: linear-gradient(135deg, rgba(10, 10, 10, 0.9) 0%, rgba(26, 26, 26, 0.9) 100%);
+    border: 1px solid rgba(255, 184, 0, 0.2);
+    transition: all 0.3s ease;
+  }
+
+  .admin-input-gold:focus {
+    border-color: var(--oro-fuerte);
+    box-shadow: 0 0 0 3px rgba(255, 184, 0, 0.1),
+                0 0 20px rgba(255, 184, 0, 0.2);
+    outline: none;
+  }
+
+  /* Container principal Admin */
+  .admin-container-gradient {
+    background: radial-gradient(ellipse at top, rgba(255, 184, 0, 0.08) 0%, rgba(0, 0, 0, 0.95) 50%);
+  }
+
+  /* Métricas doradas brillantes */
+  .admin-metric-gold {
+    background: linear-gradient(135deg, #FFB800 0%, #FFC933 50%, #8C6A1D 100%);
+    box-shadow: 0 4px 15px rgba(255, 184, 0, 0.4),
+                0 8px 30px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  /* Modales Admin */
+  .admin-modal-backdrop {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(26, 26, 26, 0.9) 100%);
+    backdrop-filter: blur(8px);
+  }
+
+  .admin-modal-gold {
+    background: linear-gradient(145deg, rgba(20, 20, 20, 0.98) 0%, rgba(10, 10, 10, 0.98) 100%);
+    border: 2px solid rgba(255, 184, 0, 0.3);
+    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.8),
+                0 0 100px rgba(255, 184, 0, 0.15),
+                inset 0 1px 0 rgba(255, 184, 0, 0.1);
+  }
+
+  /* Texto dorado brillante */
+  .admin-text-gold {
+    color: var(--oro-fuerte);
+    text-shadow: 0 0 10px rgba(255, 184, 0, 0.3),
+                 0 0 20px rgba(255, 184, 0, 0.1);
+  }
+
+  /* Badges y etiquetas */
+  .admin-badge-gold {
+    background: linear-gradient(135deg, var(--oro-fuerte) 0%, var(--oro-brillante) 100%);
+    box-shadow: 0 2px 10px rgba(255, 184, 0, 0.4);
+    color: #0a0a0a;
+    font-weight: 700;
+  }
+
+  /* Animaciones originales */
+  @keyframes slide-in-right {
+    from {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes scale-in {
+    from {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.2s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.2s ease-out;
+  }
+
+  /* Efecto de brillo que recorre el borde */
+  @keyframes border-shine {
+    0% {
+      background-position: 0% 0%;
+    }
+    100% {
+      background-position: 200% 200%;
+    }
+  }
+
+  .border-shine-effect {
+    position: relative;
+    background: black;
+  }
+
+  .border-shine-effect::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 1rem;
+    padding: 2px;
+    background: linear-gradient(90deg, 
+      #D4B34F 0%, 
+      #D4B34F 3%,
+      #F2E387 5%, 
+      #FFFFFF 7%,
+      #F2E387 9%,
+      #D4B34F 12%,
+      #D4B34F 100%
+    );
+    background-size: 300% 300%;
+    animation: border-shine 4s linear infinite;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, 
+                  linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
   }
 }

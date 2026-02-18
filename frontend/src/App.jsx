@@ -52,6 +52,7 @@ function App() {
             <Route index element={<AdminBarberos />} />
           </Route>
 
+          {/* Ruta protegida - Gestión de Servicios */}
           <Route 
             path="/admin-servicios" 
             element={

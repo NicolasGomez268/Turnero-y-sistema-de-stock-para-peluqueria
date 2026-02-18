@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { useNotification } from '../context/NotificationContext';
 import api from '../services/api';
 
 export default function ServiciosAdmin() {
+  const notification = useNotification();
   const [servicios, setServicios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -24,7 +26,7 @@ export default function ServiciosAdmin() {
       const data = await api.getServicios();
       setServicios(data);
     } catch (error) {
-      alert('Error al cargar servicios');
+      notification.error('Error al cargar servicios');
     } finally {
       setLoading(false);
     }
@@ -58,45 +60,50 @@ export default function ServiciosAdmin() {
     e.preventDefault();
     
     if (!formData.nombre || !formData.precio || !formData.duracion_minutos) {
-      alert('Por favor completá todos los campos obligatorios');
+      notification.warning('Por favor completá todos los campos obligatorios');
       return;
     }
 
     try {
       if (servicioEditando) {
         await api.updateServicio(servicioEditando.id, formData);
+        notification.success('✅ Servicio actualizado correctamente');
       } else {
         await api.createServicio(formData);
+        notification.success('✅ Servicio creado correctamente');
       }
       setModalAbierto(false);
       cargarServicios();
     } catch (error) {
       console.error('Error al guardar servicio:', error);
-      alert('Error al guardar servicio: ' + (error.message || 'Error desconocido'));
+      notification.error('Error al guardar servicio: ' + (error.message || 'Error desconocido'));
     }
   };
 
   const handleEliminar = async (id) => {
     const servicio = servicios.find(s => s.id === id);
     
-    if (!confirm(`¿Estás seguro de eliminar "${servicio?.nombre}"?\n\n⚠️ Esta acción no se puede deshacer.`)) {
-      return;
-    }
+    const confirmed = await notification.confirm(
+      `¿Estás seguro de eliminar "${servicio?.nombre}"?\n\n⚠️ Esta acción no se puede deshacer.`,
+      'Eliminar servicio'
+    );
+    
+    if (!confirmed) return;
 
     try {
       await api.deleteServicio(id);
       cargarServicios();
-      alert('✅ Servicio eliminado correctamente');
+      notification.success('✅ Servicio eliminado correctamente');
     } catch (error) {
       console.error('Error al eliminar:', error);
       
       // Si el backend devuelve un mensaje estructurado
       if (error.response?.data?.mensaje) {
         const data = error.response.data;
-        alert(`❌ ${data.error}\n\n${data.mensaje}\n\n💡 ${data.sugerencia}`);
+        notification.error(`❌ ${data.error}\n\n${data.mensaje}\n\n💡 ${data.sugerencia}`);
       } else {
         // Mensaje genérico
-        alert('❌ Error al eliminar el servicio. Puede que tenga turnos asociados.\n\n💡 Intenta desactivarlo en lugar de eliminarlo.');
+        notification.error('❌ Error al eliminar el servicio. Puede que tenga turnos asociados.\n\n💡 Intenta desactivarlo en lugar de eliminarlo.');
       }
     }
   };
@@ -107,35 +114,37 @@ export default function ServiciosAdmin() {
         ...servicio,
         is_active: !servicio.is_active
       });
+      notification.success(servicio.is_active ? 'Servicio desactivado' : 'Servicio activado');
       cargarServicios();
     } catch (error) {
-      alert('Error al cambiar estado del servicio');
+      notification.error('Error al cambiar estado del servicio');
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-tincho-dark flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-white text-xl">Cargando servicios...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-tincho-dark p-6">
+    <div className="min-h-screen bg-black p-3 sm:p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Gestión de Servicios</h1>
-            <p className="text-gray-400">Administrá los servicios que ofrece la barbería</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">Gestión de Servicios</h1>
+            <p className="text-gray-400 text-sm sm:text-base">Administrá los servicios que ofrece la barbería</p>
           </div>
           <button
             onClick={abrirModalNuevo}
-            className="px-6 py-3 bg-tincho-gold text-tincho-dark font-bold rounded-lg
-                     hover:bg-yellow-400 transition-colors flex items-center gap-2"
+            className="px-4 sm:px-6 py-2 sm:py-3 bg-oro-base text-tincho-dark font-bold rounded-lg
+                     hover:bg-oro-brillo transition-colors flex items-center gap-2 text-sm sm:text-base
+                     w-full sm:w-auto justify-center"
           >
-            <span className="text-xl">➕</span>
+            <span className="text-lg sm:text-xl">➕</span>
             Nuevo Servicio
           </button>
         </div>
@@ -145,8 +154,8 @@ export default function ServiciosAdmin() {
           {servicios.map(servicio => (
             <div
               key={servicio.id}
-              className={`bg-gray-900 rounded-lg p-6 border-2 transition-all
-                        ${servicio.is_active ? 'border-gray-700' : 'border-red-900 opacity-60'}`}
+              className={`admin-card-dark-gold rounded-lg p-6 transition-all
+                        ${servicio.is_active ? '' : 'border-2 border-red-900 opacity-60'}`}
             >
               {/* Badge de estado */}
               <div className="flex items-center justify-between mb-3">
@@ -174,7 +183,7 @@ export default function ServiciosAdmin() {
               {/* Precio y duración */}
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="text-2xl font-bold text-tincho-gold">
+                  <p className="text-2xl font-bold text-white">
                     ${Number(servicio.precio).toLocaleString()}
                   </p>
                 </div>
@@ -211,8 +220,8 @@ export default function ServiciosAdmin() {
             <p className="text-gray-400 text-lg mb-4">No hay servicios creados</p>
             <button
               onClick={abrirModalNuevo}
-              className="px-6 py-3 bg-tincho-gold text-tincho-dark font-bold rounded-lg
-                       hover:bg-yellow-400 transition-colors"
+              className="px-6 py-3 bg-oro-base text-tincho-dark font-bold rounded-lg
+                       hover:bg-oro-brillo transition-colors"
             >
               Crear Primer Servicio
             </button>
@@ -222,8 +231,8 @@ export default function ServiciosAdmin() {
 
       {/* Modal Crear/Editar */}
       {modalAbierto && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-lg max-w-md w-full p-6 relative">
+        <div className="fixed inset-0 admin-modal-backdrop flex items-center justify-center z-50 p-4">
+          <div className="admin-modal-gold rounded-lg max-w-md w-full p-6 relative">
             {/* Botón cerrar */}
             <button
               onClick={() => setModalAbierto(false)}
@@ -330,8 +339,8 @@ export default function ServiciosAdmin() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-3 bg-tincho-gold text-tincho-dark rounded-lg
-                           hover:bg-yellow-400 transition-colors font-bold"
+                  className="flex-1 px-4 py-3 bg-oro-base text-tincho-dark rounded-lg
+                           hover:bg-oro-brillo transition-colors font-bold"
                 >
                   {servicioEditando ? 'Guardar Cambios' : 'Crear Servicio'}
                 </button>

@@ -21,7 +21,7 @@ const TurnoAdminCard = ({ turno, onMarcarAsistio, onCancelar, loading }) => {
                     transition-all duration-200">
       {/* Header con hora y estado */}
       <div className="flex justify-between items-center mb-3">
-        <div className="text-2xl font-bold text-tincho-gold">
+        <div className="text-2xl font-bold text-white">
           {turno.hora}
         </div>
         <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getEstadoColor(turno.estado)}`}>

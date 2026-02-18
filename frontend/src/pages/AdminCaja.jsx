@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import api from '../services/api';
 
 const AdminCaja = () => {
@@ -8,7 +8,7 @@ const AdminCaja = () => {
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-3xl font-bold text-tincho-gold mb-2">
+        <h2 className="text-3xl font-bold text-white mb-2">
           Caja y Liquidación
         </h2>
         <p className="text-gray-400">
@@ -22,7 +22,7 @@ const AdminCaja = () => {
           onClick={() => setPestanaActiva('caja')}
           className={`px-6 py-3 font-semibold transition-all duration-200 border-b-2
                      ${pestanaActiva === 'caja'
-                       ? 'text-tincho-gold border-tincho-gold'
+                       ? 'text-white border-white'
                        : 'text-gray-400 border-transparent hover:text-gray-300'}`}
         >
           Caja Diaria
@@ -31,7 +31,7 @@ const AdminCaja = () => {
           onClick={() => setPestanaActiva('liquidacion')}
           className={`px-6 py-3 font-semibold transition-all duration-200 border-b-2
                      ${pestanaActiva === 'liquidacion'
-                       ? 'text-tincho-gold border-tincho-gold'
+                       ? 'text-white border-white'
                        : 'text-gray-400 border-transparent hover:text-gray-300'}`}
         >
           Liquidación Semanal
@@ -40,7 +40,7 @@ const AdminCaja = () => {
           onClick={() => setPestanaActiva('metricas')}
           className={`px-6 py-3 font-semibold transition-all duration-200 border-b-2
                      ${pestanaActiva === 'metricas'
-                       ? 'text-tincho-gold border-tincho-gold'
+                       ? 'text-white border-white'
                        : 'text-gray-400 border-transparent hover:text-gray-300'}`}
         >
           Métricas Mensuales
@@ -100,13 +100,12 @@ const CajaDiariaTab = () => {
           type="date"
           value={fecha}
           onChange={(e) => setFecha(e.target.value)}
-          className="px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-gray-300
-                   focus:border-tincho-gold focus:outline-none"
+          className="px-4 py-2 admin-input-gold rounded-lg text-gray-300"
         />
         <button
           onClick={cargarDatos}
-          className="px-4 py-2 bg-tincho-gold text-tincho-dark font-bold rounded-lg
-                   hover:bg-yellow-500 transition-colors"
+          className="px-4 py-2 bg-oro-base text-tincho-dark font-bold rounded-lg
+                   hover:bg-oro-brillo transition-colors"
         >
           Actualizar
         </button>
@@ -143,7 +142,7 @@ const CajaDiariaTab = () => {
 
       {/* Desglose por método de pago */}
       <div className="bg-gray-800 rounded-lg p-6">
-        <h3 className="text-xl font-bold text-tincho-gold mb-4">
+        <h3 className="text-xl font-bold text-white mb-4">
           Desglose por Método de Pago (Ventas de Productos)
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -283,8 +282,8 @@ const LiquidacionTab = () => {
           </div>
           <button
             onClick={cargarDatos}
-            className="px-4 py-2 bg-tincho-gold text-tincho-dark font-bold rounded-lg
-                     hover:bg-yellow-500 transition-colors"
+            className="px-4 py-2 bg-oro-base text-tincho-dark font-bold rounded-lg
+                     hover:bg-oro-brillo transition-colors"
           >
             Consultar
           </button>
@@ -323,9 +322,9 @@ const LiquidacionTab = () => {
             ${datos.resumen_general.total_para_barberos.toLocaleString('es-AR')}
           </p>
         </div>
-        <div className="bg-gradient-to-br from-tincho-gold to-yellow-600 rounded-lg p-6">
-          <p className="text-yellow-900 text-sm mb-1">Total para la Casa</p>
-          <p className="text-3xl font-bold text-yellow-900">
+        <div className="admin-metric-gold rounded-lg p-6">
+          <p className="text-black text-sm mb-1">Total para la Casa</p>
+          <p className="text-3xl font-bold text-black">
             ${datos.resumen_general.total_para_casa.toLocaleString('es-AR')}
           </p>
         </div>
@@ -336,12 +335,12 @@ const LiquidacionTab = () => {
         <table className="w-full">
           <thead className="bg-gray-900">
             <tr>
-              <th className="px-6 py-4 text-left text-tincho-gold font-bold">Barbero</th>
-              <th className="px-6 py-4 text-center text-tincho-gold font-bold">Turnos</th>
-              <th className="px-6 py-4 text-right text-tincho-gold font-bold">Total Bruto</th>
-              <th className="px-6 py-4 text-center text-tincho-gold font-bold">% Barbero</th>
-              <th className="px-6 py-4 text-right text-tincho-gold font-bold">A Pagar</th>
-              <th className="px-6 py-4 text-right text-tincho-gold font-bold">Para la Casa</th>
+              <th className="px-6 py-4 text-left text-white font-bold">Barbero</th>
+              <th className="px-6 py-4 text-center text-white font-bold">Turnos</th>
+              <th className="px-6 py-4 text-right text-white font-bold">Total Bruto</th>
+              <th className="px-6 py-4 text-center text-white font-bold">% Barbero</th>
+              <th className="px-6 py-4 text-right text-white font-bold">A Pagar</th>
+              <th className="px-6 py-4 text-right text-white font-bold">Para la Casa</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
@@ -363,7 +362,7 @@ const LiquidacionTab = () => {
                 <td className="px-6 py-4 text-right text-green-400 font-bold">
                   ${liq.comision_barbero.toLocaleString('es-AR')}
                 </td>
-                <td className="px-6 py-4 text-right text-tincho-gold font-bold">
+                <td className="px-6 py-4 text-right text-white font-bold">
                   ${liq.comision_casa.toLocaleString('es-AR')}
                 </td>
               </tr>
@@ -442,8 +441,8 @@ const MetricasTab = () => {
         />
         <button
           onClick={cargarDatos}
-          className="px-4 py-2 bg-tincho-gold text-tincho-dark font-bold rounded-lg
-                   hover:bg-yellow-500 transition-colors"
+          className="px-4 py-2 bg-oro-base text-tincho-dark font-bold rounded-lg
+                   hover:bg-oro-brillo transition-colors"
         >
           Consultar
         </button>
@@ -477,10 +476,10 @@ const MetricasTab = () => {
         </div>
 
         {/* Mejor Barbero */}
-        <div className="bg-gradient-to-br from-tincho-gold to-yellow-600 rounded-lg p-6">
-          <p className="text-yellow-900 text-sm font-semibold mb-1">Mejor Barbero</p>
-          <p className="text-2xl font-bold text-yellow-900">{datos.mejor_barbero.nombre}</p>
-          <p className="text-yellow-800 text-sm mt-1">
+        <div className="admin-metric-gold rounded-lg p-6">
+          <p className="text-black text-sm font-semibold mb-1">Mejor Barbero</p>
+          <p className="text-2xl font-bold text-black">{datos.mejor_barbero.nombre}</p>
+          <p className="text-gray-800 text-sm mt-1">
             {datos.mejor_barbero.cantidad_turnos} turnos
           </p>
         </div>

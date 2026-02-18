@@ -27,9 +27,13 @@ class ReservarTurnoView(APIView):
     
     def post(self, request):
         """Crear una nueva reserva de turno"""
+        print("DEBUG - Reservar turno - Datos recibidos:")
+        print(f"request.data: {request.data}")
+        
         serializer = ReservarTurnoSerializer(data=request.data)
         
         if not serializer.is_valid():
+            print(f"DEBUG - Errores de validación: {serializer.errors}")
             return Response(
                 {
                     'error': 'Datos inválidos',
@@ -40,6 +44,7 @@ class ReservarTurnoView(APIView):
         
         # Crear el turno con estado PENDIENTE
         turno = serializer.save(estado=EstadoTurno.PENDIENTE)
+        print(f"DEBUG - Turno creado exitosamente: ID {turno.id}")
         
         # Preparar respuesta
         response_serializer = TurnoReservadoResponseSerializer(turno)

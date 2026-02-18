@@ -2,15 +2,16 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TurnoAdminCard from '../components/TurnoAdminCard';
 import { useAuth } from '../context/AuthContext';
+import { useNotification } from '../context/NotificationContext';
 import api from '../services/api';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const notification = useNotification();
   
   const [turnos, setTurnos] = useState([]);
   const [metricas, setMetricas] = useState({
-    gananciasSemanal: 0,
     turnosHoy: 0,
     proximoCliente: null,
   });
@@ -21,6 +22,7 @@ const AdminDashboard = () => {
   const [fechaSeleccionada, setFechaSeleccionada] = useState(
     new Date().toISOString().split('T')[0]
   );
+  const [filtroEstado, setFiltroEstado] = useState('TODOS'); // TODOS, PENDIENTE, REALIZADO
   const [modalNuevoTurno, setModalNuevoTurno] = useState(false);
 
   // Cargar datos iniciales
@@ -48,31 +50,31 @@ const AdminDashboard = () => {
   };
 
   const calcularMetricas = (turnosData) => {
+    // Usar la fecha seleccionada en lugar de siempre "hoy"
+    const turnosDia = turnosData.filter(t => t.fecha === fechaSeleccionada);
+    
+    // Turnos del día seleccionado
+    setMetricas(prev => ({ ...prev, turnosHoy: turnosDia.length }));
+
+    // Próximo cliente (solo si es hoy o futuro)
     const hoy = new Date().toISOString().split('T')[0];
-    const turnosHoy = turnosData.filter(t => t.fecha === hoy);
-    
-    // Ganancia semanal (últimos 7 días)
-    const hace7Dias = new Date();
-    hace7Dias.setDate(hace7Dias.getDate() - 7);
-    
-    api.getTurnosSemanales().then(turnosSemanales => {
-      const ganancia = turnosSemanales
-        .filter(t => t.estado === 'REALIZADO')
-        .reduce((sum, t) => sum + (parseFloat(t.servicio_precio) || 0), 0);
-      
-      setMetricas(prev => ({ ...prev, gananciasSemanal: ganancia }));
-    });
-
-    // Turnos de hoy
-    setMetricas(prev => ({ ...prev, turnosHoy: turnosHoy.length }));
-
-    // Próximo cliente
     const ahora = new Date();
     const horaActual = ahora.toTimeString().split(':').slice(0, 2).join(':');
     
-    const proximoTurno = turnosHoy
-      .filter(t => t.estado === 'PENDIENTE' && t.hora >= horaActual)
-      .sort((a, b) => a.hora.localeCompare(b.hora))[0];
+    let proximoTurno = null;
+    
+    // Si la fecha seleccionada es hoy, buscar próximo turno pendiente
+    if (fechaSeleccionada === hoy) {
+      proximoTurno = turnosDia
+        .filter(t => t.estado === 'PENDIENTE' && t.hora >= horaActual)
+        .sort((a, b) => a.hora.localeCompare(b.hora))[0];
+    } 
+    // Si es una fecha futura, mostrar el primer turno pendiente del día
+    else if (fechaSeleccionada > hoy) {
+      proximoTurno = turnosDia
+        .filter(t => t.estado === 'PENDIENTE')
+        .sort((a, b) => a.hora.localeCompare(b.hora))[0];
+    }
 
     setMetricas(prev => ({ 
       ...prev, 
@@ -83,106 +85,73 @@ const AdminDashboard = () => {
   };
 
   const handleMarcarAsistio = async (turnoId) => {
-    if (!confirm('¿Confirmar que el cliente asistió?')) return;
+    const confirmed = await notification.confirm('¿Confirmar que el cliente asistió?');
+    if (!confirmed) return;
 
     setActionLoading(true);
     try {
       await api.marcarTurnoRealizado(turnoId);
       await cargarDatos();
+      notification.success('✅ Turno marcado como realizado');
     } catch (err) {
-      alert('Error al marcar turno: ' + err.message);
+      notification.error('Error al marcar turno: ' + err.message);
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleCancelar = async (turnoId) => {
-    if (!confirm('¿Estás seguro de cancelar este turno?')) return;
+    const confirmed = await notification.confirm('¿Estás seguro de cancelar este turno?');
+    if (!confirmed) return;
 
     setActionLoading(true);
     try {
       await api.cancelarTurno(turnoId);
       await cargarDatos();
+      notification.success('Turno cancelado correctamente');
     } catch (err) {
-      alert('Error al cancelar turno: ' + err.message);
+      notification.error('Error al cancelar turno: ' + err.message);
     } finally {
       setActionLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    if (confirm('¿Cerrar sesión?')) {
+  const handleLogout = async () => {
+    const confirmed = await notification.confirm('¿Deseas cerrar sesión?', 'Confirmar cierre de sesión');
+    if (confirmed) {
       logout();
+      notification.info('Sesión cerrada correctamente');
       navigate('/');
     }
   };
 
+  // Helper para obtener el label de la fecha seleccionada
+  const obtenerLabelFecha = () => {
+    const hoy = new Date().toISOString().split('T')[0];
+    if (fechaSeleccionada === hoy) return 'Turnos de Hoy';
+    
+    const fechaSel = new Date(fechaSeleccionada + 'T00:00:00');
+    const fechaHoy = new Date(hoy + 'T00:00:00');
+    const diffDias = Math.round((fechaSel - fechaHoy) / (1000 * 60 * 60 * 24));
+    
+    if (diffDias === 1) return 'Turnos de Mañana';
+    if (diffDias === -1) return 'Turnos de Ayer';
+    if (diffDias > 1) return `Turnos del ${fechaSeleccionada}`;
+    if (diffDias < -1) return `Turnos del ${fechaSeleccionada}`;
+    return 'Turnos del Día';
+  };
+
   return (
-    <div className="min-h-screen bg-tincho-dark">
-      {/* Header */}
-      <header className="bg-gray-900 border-b border-gray-800 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            {/* Logo */}
-            <div className="flex items-center space-x-4">
-              <h1 className="text-3xl font-bold text-tincho-gold">TINCHO</h1>
-              <span className="text-gray-500">|</span>
-              <span className="text-gray-400">Panel Admin</span>
-            </div>
-
-            {/* Usuario y acciones */}
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-400">
-                👤 {user?.username}
-              </span>
-              
-              <button
-                onClick={() => navigate('/admin-stock')}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white 
-                         rounded-lg transition-all duration-200"
-              >
-                📦 Stock
-              </button>
-
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 
-                         rounded-lg transition-all duration-200"
-              >
-                Cerrar Sesión
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Container Principal */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Métricas Rápidas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {/* Ganancia Semanal */}
-          <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-lg p-6 
-                        shadow-lg border border-green-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-green-100 text-sm font-semibold mb-1">
-                  Ganancia Semanal
-                </p>
-                <p className="text-3xl font-bold text-white">
-                  ${metricas.gananciasSemanal.toLocaleString('es-AR')}
-                </p>
-              </div>
-              <div className="text-5xl opacity-20">💰</div>
-            </div>
-          </div>
-
-          {/* Turnos de Hoy */}
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+      {/* Métricas Rápidas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* Turnos del Día */}
           <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg p-6 
                         shadow-lg border border-blue-500">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-blue-100 text-sm font-semibold mb-1">
-                  Turnos de Hoy
+                  {obtenerLabelFecha()}
                 </p>
                 <p className="text-3xl font-bold text-white">
                   {metricas.turnosHoy}
@@ -193,36 +162,35 @@ const AdminDashboard = () => {
           </div>
 
           {/* Próximo Cliente */}
-          <div className="bg-gradient-to-br from-tincho-gold to-yellow-600 rounded-lg p-6 
-                        shadow-lg border border-yellow-500">
+          <div className="admin-metric-gold rounded-lg p-6 shadow-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-yellow-900 text-sm font-semibold mb-1">
+                <p className="text-black text-sm font-semibold mb-1">
                   Próximo Cliente
                 </p>
                 {metricas.proximoCliente ? (
-                  <>
-                    <p className="text-2xl font-bold text-yellow-900">
+                  <div>
+                    <p className="text-lg font-semibold text-gray-900">
                       {metricas.proximoCliente.hora}
                     </p>
-                    <p className="text-sm text-yellow-800 truncate">
+                    <p className="text-sm text-gray-500 truncate">
                       {metricas.proximoCliente.nombre}
                     </p>
-                  </>
+                  </div>
                 ) : (
-                  <p className="text-xl font-bold text-yellow-900">
+                  <p className="text-sm text-gray-500">
                     Sin turnos pendientes
                   </p>
                 )}
               </div>
-              <div className="text-5xl opacity-20">⏰</div>
+              <div className="text-4xl text-gray-300">⏰</div>
             </div>
           </div>
         </div>
 
         {/* Selector de Fecha */}
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-tincho-gold">
+          <h2 className="text-2xl font-bold text-white">
             Agenda del Día
           </h2>
           
@@ -236,6 +204,19 @@ const AdminDashboard = () => {
               ➕ Nueva Reserva
             </button>
             
+            <label className="text-gray-400">Estado:</label>
+            <select
+              value={filtroEstado}
+              onChange={(e) => setFiltroEstado(e.target.value)}
+              className="px-4 py-2 admin-input-gold rounded-lg 
+                       text-gray-200 cursor-pointer"
+            >
+              <option value="TODOS">Todos</option>
+              <option value="PENDIENTE">Pendientes</option>
+              <option value="REALIZADO">Realizados</option>
+              <option value="CANCELADO">Cancelados</option>
+            </select>
+            
             <label className="text-gray-400">Fecha:</label>
             <input
               type="date"
@@ -248,8 +229,8 @@ const AdminDashboard = () => {
             
             <button
               onClick={cargarDatos}
-              className="px-4 py-2 bg-tincho-gold text-tincho-dark font-bold 
-                       rounded-lg hover:bg-yellow-500 transition-all duration-200"
+              className="px-4 py-2 bg-oro-base text-tincho-dark font-bold 
+                       rounded-lg hover:bg-oro-brillo transition-all duration-200"
             >
               Actualizar
             </button>
@@ -267,7 +248,7 @@ const AdminDashboard = () => {
         {/* Loading */}
         {loading ? (
           <div className="text-center py-12">
-            <div className="text-tincho-gold text-xl">Cargando turnos...</div>
+            <div className="text-white text-xl">Cargando turnos...</div>
           </div>
         ) : turnos.length === 0 ? (
           <div className="text-center py-12 bg-gray-800 rounded-lg border border-gray-700">
@@ -277,19 +258,33 @@ const AdminDashboard = () => {
           </div>
         ) : (
           /* Lista de Turnos */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {turnos.map((turno) => (
-              <TurnoAdminCard
-                key={turno.id}
-                turno={turno}
-                onMarcarAsistio={handleMarcarAsistio}
-                onCancelar={handleCancelar}
-                loading={actionLoading}
-              />
-            ))}
-          </div>
+          (() => {
+            // Filtrar turnos según el estado seleccionado
+            const turnosFiltrados = filtroEstado === 'TODOS' 
+              ? turnos 
+              : turnos.filter(t => t.estado === filtroEstado);
+
+            return turnosFiltrados.length === 0 ? (
+              <div className="text-center py-12 bg-gray-800 rounded-lg border border-gray-700">
+                <p className="text-gray-400 text-xl">
+                  No hay turnos {filtroEstado.toLowerCase()}s para esta fecha
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {turnosFiltrados.map((turno) => (
+                  <TurnoAdminCard
+                    key={turno.id}
+                    turno={turno}
+                    onMarcarAsistio={handleMarcarAsistio}
+                    onCancelar={handleCancelar}
+                    loading={actionLoading}
+                  />
+                ))}
+              </div>
+            );
+          })()
         )}
-      </div>
 
       {/* Modal Nuevo Turno */}
       {modalNuevoTurno && (
@@ -309,6 +304,7 @@ const AdminDashboard = () => {
 // COMPONENTE: NuevoTurnoModal
 // ===================================
 const NuevoTurnoModal = ({ onClose, onSuccess }) => {
+  const notification = useNotification();
   const [paso, setPaso] = useState(1);
   const [loading, setLoading] = useState(false);
   const [datos, setDatos] = useState({
@@ -336,7 +332,7 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
       const data = await api.getBarberos();
       setBarberos(data.filter(b => b.is_active));
     } catch (error) {
-      alert('Error al cargar barberos');
+      notification.error('Error al cargar barberos');
     }
   };
 
@@ -352,7 +348,7 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
       const data = await api.getServicios();
       setServicios(data.filter(s => s.is_active));
     } catch (error) {
-      alert('Error al cargar servicios');
+      notification.error('Error al cargar servicios');
     }
   };
 
@@ -401,10 +397,10 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
         notas: datos.notas
       });
       
-      alert('✅ Turno creado exitosamente');
+      notification.success('✅ Turno creado exitosamente');
       onSuccess();
     } catch (error) {
-      alert('Error al crear turno: ' + (error.error || 'Error desconocido'));
+      notification.error('Error al crear turno: ' + (error.error || 'Error desconocido'));
     } finally {
       setLoading(false);
     }
@@ -421,12 +417,12 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-700">
+    <div className="fixed inset-0 admin-modal-backdrop flex items-center justify-center z-50 p-4">
+      <div className="admin-modal-gold rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-gray-900 border-b border-gray-700 p-6 flex items-center justify-between">
+        <div className="sticky top-0 bg-gradient-to-b from-black/80 to-transparent border-b border-oro-fuerte/30 p-6 flex items-center justify-between">
           <div>
-            <h3 className="text-2xl font-bold text-tincho-gold">Nueva Reserva Manual</h3>
+            <h3 className="text-2xl font-bold text-white">Nueva Reserva Manual</h3>
             <p className="text-sm text-gray-400 mt-1">Para clientes walk-in sin turno previo</p>
           </div>
           <button
@@ -513,7 +509,7 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
                         <p className="font-bold text-white">{servicio.nombre}</p>
                         <p className="text-sm text-gray-400">{servicio.duracion_minutos} min</p>
                       </div>
-                      <p className="text-xl font-bold text-tincho-gold">
+                      <p className="text-xl font-bold text-white">
                         ${servicio.precio.toLocaleString()}
                       </p>
                     </div>
@@ -598,7 +594,7 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
                   </div>
                   <div className="flex justify-between pt-2 border-t border-gray-700">
                     <span className="text-gray-400">Total:</span>
-                    <span className="text-tincho-gold text-lg font-bold">
+                    <span className="text-white text-lg font-bold">
                       ${datos.servicio?.precio.toLocaleString()}
                     </span>
                   </div>
@@ -661,7 +657,7 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
             <button
               onClick={() => setPaso(paso + 1)}
               disabled={!puedeAvanzar()}
-              className="px-6 py-2 bg-tincho-gold hover:bg-yellow-500 text-tincho-dark 
+              className="px-6 py-2 bg-oro-base hover:bg-oro-brillo text-tincho-dark 
                        font-bold rounded-lg transition-colors disabled:opacity-50 
                        disabled:cursor-not-allowed"
             >

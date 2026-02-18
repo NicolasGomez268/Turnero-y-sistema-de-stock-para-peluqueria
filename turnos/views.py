@@ -23,6 +23,7 @@ class BarberoViewSet(viewsets.ModelViewSet):
     search_fields = ['nombre', 'telefono']
     ordering_fields = ['nombre', 'fecha_ingreso']
     ordering = ['nombre']
+    pagination_class = None  # Sin paginación para barberos
 
     def get_queryset(self):
         """Filtrar solo barberos activos si se pasa el parámetro ?active=true"""
@@ -47,6 +48,7 @@ class ServicioViewSet(viewsets.ModelViewSet):
     search_fields = ['nombre', 'descripcion']
     ordering_fields = ['nombre', 'precio', 'duracion_minutos']
     ordering = ['nombre']
+    pagination_class = None  # Sin paginación para servicios
 
     def get_queryset(self):
         """Filtrar solo servicios activos si se pasa el parámetro ?active=true"""
@@ -91,4 +93,5 @@ class TurnoViewSet(viewsets.ModelViewSet):
     search_fields = ['cliente_nombre', 'cliente_telefono']
     ordering_fields = ['fecha', 'hora', 'creado_en']
     ordering = ['-fecha', '-hora']
+    pagination_class = None  # Sin paginación - el frontend no maneja navegación entre páginas
 

@@ -105,10 +105,11 @@ class DisponibilidadView(APIView):
             slots = [slot for slot in slots if slot['hora'] > hora_actual]
         
         # Obtener los turnos ya ocupados para ese día y barbero
+        # Solo contamos PENDIENTE porque REALIZADO ya pasó y no afecta disponibilidad
         turnos_ocupados = Turno.objects.filter(
             barbero_id=barbero_id,
             fecha=fecha,
-            estado__in=[EstadoTurno.PENDIENTE, EstadoTurno.CONFIRMADO]
+            estado=EstadoTurno.PENDIENTE
         ).select_related('servicio')
         
         # Marcar slots ocupados

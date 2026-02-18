@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Círculo exterior -->
+  <circle cx="100" cy="100" r="95" fill="#2a2a2a" stroke="#d4af37" stroke-width="3"/>
+  
+  <!-- Texto superior "BEST IN TOWN" -->
+  <path id="topText" fill="none" d="M 45,80 A 55,55 0 0,1 155,80"/>
+  <text font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#d4af37" letter-spacing="3">
+    <textPath href="#topText" startOffset="50%" text-anchor="middle">
+      BEST IN TOWN
+    </textPath>
+  </text>
+  
+  <!-- Cabello (forma estilizada) -->
+  <path d="M 70,85 Q 65,70 80,65 Q 95,60 100,58 Q 105,60 120,65 Q 135,70 130,85 Z" 
+        fill="#1a1a1a" stroke="#d4af37" stroke-width="1"/>
+  
+  <!-- Texto "TINCHO" -->
+  <text x="100" y="115" font-family="Impact, Arial Black, sans-serif" font-size="38" 
+        font-weight="900" fill="#d4af37" text-anchor="middle" letter-spacing="2">
+    TINCHO
+  </text>
+  
+  <!-- Bigote estilizado -->
+  <g stroke="#1a1a1a" stroke-width="2" fill="#1a1a1a">
+    <!-- Lado izquierdo del bigote -->
+    <path d="M 85,135 Q 70,132 60,130 Q 55,128 58,125 Q 70,127 85,130 Z"/>
+    <!-- Lado derecho del bigote -->
+    <path d="M 115,135 Q 130,132 140,130 Q 145,128 142,125 Q 130,127 115,130 Z"/>
+    <!-- Centro del bigote -->
+    <ellipse cx="100" cy="133" rx="15" ry="6"/>
+  </g>
+  
+  <!-- Texto inferior "BARBER" -->
+  <path id="bottomText" fill="none" d="M 155,130 A 55,55 0 0,1 45,130"/>
+  <text font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#d4af37" letter-spacing="4">
+    <textPath href="#bottomText" startOffset="50%" text-anchor="middle">
+      BARBER
+    </textPath>
+  </text>
+  
+  <!-- Detalles decorativos (puntos) -->
+  <circle cx="35" cy="100" r="3" fill="#d4af37"/>
+  <circle cx="165" cy="100" r="3" fill="#d4af37"/>
+</svg>
