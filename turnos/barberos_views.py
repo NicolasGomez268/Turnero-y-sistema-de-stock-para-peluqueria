@@ -43,10 +43,12 @@ def manage_barberos_list(request):
                 return JsonResponse({'error': 'El nombre es requerido'}, status=400)
             
             barbero = Barbero.objects.create(
-                nombre=data['nombre'],
-                especialidad=data.get('especialidad', ''),
-                is_active=data.get('is_active', True)
-            )
+            nombre=data['nombre'],
+            especialidad=data.get('especialidad', ''),
+            is_active=data.get('is_active', True),
+            is_owner=data.get('is_owner', False),
+            porcentaje_casa=data.get('porcentaje_casa', 40.00)
+        )
             
             serializer = BarberoSerializer(barbero)
             return JsonResponse(serializer.data, status=201)

@@ -9,6 +9,7 @@ import AdminCaja from './pages/AdminCaja';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminLogin from './pages/AdminLogin';
 import AdminStock from './pages/AdminStock';
+import ServiciosAdmin from './pages/ServiciosAdmin';
 
 function App() {
   return (
@@ -49,6 +50,18 @@ function App() {
             }
           >
             <Route index element={<AdminBarberos />} />
+          </Route>
+
+          {/* Ruta protegida - Gestión de Servicios */}
+          <Route 
+            path="/admin-servicios" 
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<ServiciosAdmin />} />
           </Route>
 
           <Route 

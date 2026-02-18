@@ -39,10 +39,10 @@ class BarberoAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Información Personal', {
-            'fields': ('nombre', 'foto', 'telefono')
+            'fields': ('nombre', 'foto', 'telefono', 'especialidad')
         }),
         ('Configuración', {
-            'fields': ('is_active', 'color_hex')
+            'fields': ('is_active', 'is_owner', 'porcentaje_casa', 'color_hex')
         }),
         ('Fechas', {
             'fields': ('fecha_ingreso',),
@@ -100,7 +100,7 @@ class ServicioAdmin(admin.ModelAdmin):
 
     def cantidad_turnos(self, obj):
         """Muestra la cantidad de turnos con este servicio"""
-        return obj.turnos.count()
+        return obj.turnos_servicio.count()
     cantidad_turnos.short_description = 'Total turnos'
 
 

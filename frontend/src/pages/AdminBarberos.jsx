@@ -1,8 +1,10 @@
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
+import { useNotification } from '../context/NotificationContext';
 import api from '../services/api';
 
 const AdminBarberos = () => {
+  const notification = useNotification();
   const [barberos, setBarberos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -30,29 +32,30 @@ const AdminBarberos = () => {
     try {
       await api.updateBarbero(barberoId, { is_active: !isActive });
       await cargarBarberos();
+      notification.success(isActive ? 'Barbero desactivado' : 'Barbero activado');
     } catch (err) {
-      alert('Error al actualizar barbero: ' + err.message);
+      notification.error('Error al actualizar barbero: ' + err.message);
     }
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-3 sm:p-6 max-w-7xl mx-auto">
       {/* Header con botón Nuevo Barbero */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-3xl font-bold text-tincho-gold mb-2">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">
             Gestión de Equipo
           </h2>
-          <p className="text-gray-400">
+          <p className="text-gray-400 text-sm sm:text-base">
             Administra tu equipo de barberos y sus horarios
           </p>
         </div>
         
         <button
           onClick={() => setShowNewBarberoForm(true)}
-          className="px-6 py-3 bg-tincho-gold text-tincho-dark font-bold 
-                   rounded-lg hover:bg-yellow-500 transition-all duration-200
-                   flex items-center gap-2"
+          className="px-4 sm:px-6 py-2 sm:py-3 bg-oro-base text-tincho-dark font-bold 
+                   rounded-lg hover:bg-oro-brillo transition-all duration-200
+                   flex items-center gap-2 text-sm sm:text-base w-full sm:w-auto justify-center"
         >
           <span>➕</span>
           <span>Nuevo Barbero</span>
@@ -70,7 +73,7 @@ const AdminBarberos = () => {
       {/* Loading */}
       {loading ? (
         <div className="text-center py-12">
-          <div className="text-tincho-gold text-xl">Cargando equipo...</div>
+          <div className="text-white text-xl">Cargando equipo...</div>
         </div>
       ) : (
         /* Lista de Barberos */
@@ -111,6 +114,7 @@ const AdminBarberos = () => {
    COMPONENTE: BarberoCard
 ======================================== */
 const BarberoCard = ({ barbero, onToggleActivo, onEditHorarios, onRefresh }) => {
+  const notification = useNotification();
   const [updatingPhoto, setUpdatingPhoto] = useState(false);
 
   const handlePhotoUpload = async (e) => {
@@ -121,22 +125,23 @@ const BarberoCard = ({ barbero, onToggleActivo, onEditHorarios, onRefresh }) => 
     try {
       await api.uploadBarberoPhoto(barbero.id, file);
       await onRefresh();
+      notification.success('✅ Foto actualizada correctamente');
     } catch (err) {
-      alert('Error al subir foto: ' + err.message);
+      notification.error('Error al subir foto: ' + err.message);
     } finally {
       setUpdatingPhoto(false);
     }
   };
 
   return (
-    <div className={`bg-gray-800 rounded-lg p-6 border-2 transition-all duration-200
+    <div className={`admin-card-dark-gold rounded-lg p-6 transition-all duration-200
                     ${barbero.is_active 
-                      ? 'border-tincho-gold shadow-lg shadow-tincho-gold/20' 
-                      : 'border-gray-700 opacity-60'}`}>
+                      ? 'border-2 border-oro-fuerte shadow-lg shadow-oro-fuerte/20' 
+                      : 'opacity-60'}`}>
       {/* Foto */}
       <div className="relative mb-4">
         <div className="w-32 h-32 mx-auto rounded-full overflow-hidden bg-gray-700 
-                      border-4 border-tincho-gold">
+                      border-4 border-oro-fuerte">
           {barbero.foto ? (
             <img 
               src={barbero.foto} 
@@ -152,8 +157,8 @@ const BarberoCard = ({ barbero, onToggleActivo, onEditHorarios, onRefresh }) => 
         
         {/* Botón cambiar foto */}
         <label className="absolute bottom-0 right-1/2 transform translate-x-16 
-                        bg-tincho-gold text-tincho-dark rounded-full p-2 cursor-pointer
-                        hover:bg-yellow-500 transition-all">
+                        bg-oro-base text-tincho-dark rounded-full p-2 cursor-pointer
+                        hover:bg-oro-brillo transition-all">
           <input
             type="file"
             accept="image/*"
@@ -167,7 +172,7 @@ const BarberoCard = ({ barbero, onToggleActivo, onEditHorarios, onRefresh }) => 
 
       {/* Info */}
       <div className="text-center mb-4">
-        <h3 className="text-xl font-bold text-tincho-gold mb-1">
+        <h3 className="text-xl font-bold text-white mb-1">
           {barbero.nombre}
         </h3>
         {barbero.especialidad && (
@@ -220,6 +225,7 @@ BarberoCard.propTypes = {
    MODAL: Horarios
 ======================================== */
 const HorariosModal = ({ barbero, onClose, onSave }) => {
+  const notification = useNotification();
   const [horarios, setHorarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -292,23 +298,23 @@ const HorariosModal = ({ barbero, onClose, onSave }) => {
     try {
       await api.updateBarberoHorarios(barbero.id, horarios);
       await onSave();
+      notification.success('✅ Horarios actualizados correctamente');
       onClose();
     } catch (err) {
-      alert('Error al guardar horarios: ' + err.message);
+      notification.error('Error al guardar horarios: ' + err.message);
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto 
-                    border border-gray-700">
+    <div className="fixed inset-0 admin-modal-backdrop flex items-center justify-center z-50 p-4">
+      <div className="admin-modal-gold rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto mx-2 sm:mx-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-gray-900 border-b border-gray-700 p-6 flex 
+        <div className="sticky top-0 bg-gradient-to-b from-black/80 to-transparent border-b border-oro-fuerte/30 p-6 flex 
                       items-center justify-between">
           <div>
-            <h3 className="text-2xl font-bold text-tincho-gold">
+            <h3 className="text-2xl font-bold text-white">
               Horarios de {barbero.nombre}
             </h3>
             <p className="text-sm text-gray-400 mt-1">
@@ -324,11 +330,11 @@ const HorariosModal = ({ barbero, onClose, onSave }) => {
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-3 sm:p-6">
           {loading ? (
             <div className="text-center py-8 text-gray-400">Cargando...</div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {diasSemana.map((dia) => {
                 const horario = horarios.find(h => h.dia_semana === dia.id) || {
                   dia_semana: dia.id,
@@ -338,10 +344,10 @@ const HorariosModal = ({ barbero, onClose, onSave }) => {
                 };
 
                 return (
-                  <div key={dia.id} className="bg-gray-800 rounded-lg p-4">
-                    <div className="flex items-center gap-4 flex-wrap">
+                  <div key={dia.id} className="bg-gray-800 rounded-lg p-3 sm:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                       {/* Día y Switch */}
-                      <div className="w-32">
+                      <div className="w-full sm:w-28 shrink-0">
                         <label className="flex items-center gap-2 cursor-pointer">
                           <input
                             type="checkbox"
@@ -356,48 +362,46 @@ const HorariosModal = ({ barbero, onClose, onSave }) => {
                       </div>
 
                       {horario.activo && (
-                        <>
+                        <div className="flex flex-wrap items-center gap-2">
                           {/* Horarios */}
                           <div className="flex items-center gap-2">
                             <input
                               type="time"
                               value={horario.hora_inicio || '09:00'}
                               onChange={(e) => handleUpdate(dia.id, 'hora_inicio', e.target.value)}
-                              className="px-3 py-2 bg-gray-900 border border-gray-600 
-                                       rounded text-gray-300 focus:border-tincho-gold"
+                              className="px-2 py-1.5 bg-gray-900 border border-gray-600 
+                                       rounded text-gray-300 text-sm focus:border-tincho-gold"
                             />
-                            <span className="text-gray-500">a</span>
+                            <span className="text-gray-500 text-sm">a</span>
                             <input
                               type="time"
                               value={horario.hora_fin || '18:00'}
                               onChange={(e) => handleUpdate(dia.id, 'hora_fin', e.target.value)}
-                              className="px-3 py-2 bg-gray-900 border border-gray-600 
-                                       rounded text-gray-300 focus:border-tincho-gold"
+                              className="px-2 py-1.5 bg-gray-900 border border-gray-600 
+                                       rounded text-gray-300 text-sm focus:border-tincho-gold"
                             />
                           </div>
 
                           {/* Descanso (opcional) */}
-                          <div className="flex items-center gap-2 text-sm">
-                            <span className="text-gray-500">Descanso:</span>
+                          <div className="flex items-center gap-1.5 text-sm">
+                            <span className="text-gray-500 text-xs">Descanso:</span>
                             <input
                               type="time"
                               value={horario.descanso_inicio || ''}
                               onChange={(e) => handleUpdate(dia.id, 'descanso_inicio', e.target.value)}
-                              placeholder="Inicio"
                               className="px-2 py-1 bg-gray-900 border border-gray-600 
                                        rounded text-gray-300 text-sm focus:border-tincho-gold"
                             />
-                            <span className="text-gray-500">a</span>
+                            <span className="text-gray-500 text-xs">a</span>
                             <input
                               type="time"
                               value={horario.descanso_fin || ''}
                               onChange={(e) => handleUpdate(dia.id, 'descanso_fin', e.target.value)}
-                              placeholder="Fin"
                               className="px-2 py-1 bg-gray-900 border border-gray-600 
                                        rounded text-gray-300 text-sm focus:border-tincho-gold"
                             />
                           </div>
-                        </>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -420,7 +424,7 @@ const HorariosModal = ({ barbero, onClose, onSave }) => {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-6 py-2 bg-tincho-gold hover:bg-yellow-500 text-tincho-dark 
+            className="px-6 py-2 bg-oro-base hover:bg-oro-brillo text-tincho-dark 
                      font-bold rounded-lg transition-colors disabled:opacity-50"
           >
             {saving ? 'Guardando...' : 'Guardar Cambios'}
@@ -441,10 +445,13 @@ HorariosModal.propTypes = {
    MODAL: Nuevo Barbero
 ======================================== */
 const NuevoBarberoModal = ({ onClose, onSave }) => {
+  const notification = useNotification();
   const [formData, setFormData] = useState({
     nombre: '',
     especialidad: '',
     is_active: true,
+    is_owner: false,
+    porcentaje_casa: 40,
   });
   const [saving, setSaving] = useState(false);
 
@@ -454,9 +461,10 @@ const NuevoBarberoModal = ({ onClose, onSave }) => {
     try {
       await api.createBarbero(formData);
       await onSave();
+      notification.success('✅ Barbero creado correctamente');
       onClose();
     } catch (err) {
-      alert('Error al crear barbero: ' + err.message);
+      notification.error('Error al crear barbero: ' + err.message);
     } finally {
       setSaving(false);
     }
@@ -466,7 +474,7 @@ const NuevoBarberoModal = ({ onClose, onSave }) => {
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
       <div className="bg-gray-900 rounded-lg max-w-md w-full border border-gray-700">
         <div className="p-6 border-b border-gray-700 flex items-center justify-between">
-          <h3 className="text-2xl font-bold text-tincho-gold">Nuevo Barbero</h3>
+          <h3 className="text-2xl font-bold text-white">Nuevo Barbero</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">
             ✕
           </button>
@@ -513,6 +521,40 @@ const NuevoBarberoModal = ({ onClose, onSave }) => {
             <label htmlFor="is_active" className="text-gray-300">
               Activar inmediatamente
             </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="is_owner"
+              checked={formData.is_owner}
+              onChange={(e) => setFormData({...formData, is_owner: e.target.checked})}
+              className="w-5 h-5"
+            />
+            <label htmlFor="is_owner" className="text-gray-300">
+              Es el dueño (recibe 100% de sus cortes)
+            </label>
+          </div>
+
+          {!formData.is_owner && (
+            <div>
+              <label className="block text-gray-300 mb-2 font-semibold">
+                Porcentaje para la Casa (%)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={formData.porcentaje_casa}
+                onChange={(e) => setFormData({...formData, porcentaje_casa: parseFloat(e.target.value)})}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg 
+                         text-gray-300 focus:border-tincho-gold focus:outline-none"
+                placeholder="Ej: 40"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                El barbero recibirá el {100 - formData.porcentaje_casa}%
+              </p>
+            </div>
+          )}
           </div>
 
           <div className="flex gap-4 pt-4">
@@ -527,7 +569,7 @@ const NuevoBarberoModal = ({ onClose, onSave }) => {
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 px-4 py-2 bg-tincho-gold hover:bg-yellow-500 
+              className="flex-1 px-4 py-2 bg-oro-base hover:bg-oro-brillo 
                        text-tincho-dark font-bold rounded-lg transition-colors 
                        disabled:opacity-50"
             >

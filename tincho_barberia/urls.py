@@ -24,6 +24,7 @@ urlpatterns = [
     path('', home, name='home'),
     path('admin/', admin.site.urls),
     path('api/', include('turnos.urls')),
+    path('api/inventario/', include('inventario.urls')),
 ]
 
 # Serve media files in development

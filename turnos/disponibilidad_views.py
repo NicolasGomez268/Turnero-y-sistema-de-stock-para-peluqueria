@@ -97,18 +97,21 @@ class DisponibilidadView(APIView):
         slots = self._generar_slots_horario_personalizado(horario)
         
         # FILTRAR SLOTS PASADOS SI LA FECHA ES HOY
-        fecha_actual = timezone.now().date()
-        hora_actual = timezone.now().time()
-        
+        # Usar localtime() para comparar con la hora argentina, no UTC
+        ahora_local = timezone.localtime()
+        fecha_actual = ahora_local.date()
+        hora_actual = ahora_local.time()
+
         if fecha == fecha_actual:
             # Filtrar slots cuya hora de inicio ya pasó
             slots = [slot for slot in slots if slot['hora'] > hora_actual]
         
         # Obtener los turnos ya ocupados para ese día y barbero
+        # Solo contamos PENDIENTE porque REALIZADO ya pasó y no afecta disponibilidad
         turnos_ocupados = Turno.objects.filter(
             barbero_id=barbero_id,
             fecha=fecha,
-            estado__in=[EstadoTurno.PENDIENTE, EstadoTurno.CONFIRMADO]
+            estado=EstadoTurno.PENDIENTE
         ).select_related('servicio')
         
         # Marcar slots ocupados

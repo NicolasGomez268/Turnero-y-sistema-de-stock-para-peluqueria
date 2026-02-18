@@ -13,6 +13,12 @@ class EstadoTurno(models.TextChoices):
     REALIZADO = 'REALIZADO', 'Realizado'
 
 
+class MetodoPagoTurno(models.TextChoices):
+    EFECTIVO      = 'EFECTIVO',      'Efectivo'
+    TRANSFERENCIA = 'TRANSFERENCIA', 'Transferencia'
+    TARJETA       = 'TARJETA',       'Tarjeta'
+
+
 class Barbero(models.Model):
     """
     Modelo para gestionar el staff de la barbería.
@@ -48,6 +54,18 @@ class Barbero(models.Model):
         default=True,
         verbose_name='Activo',
         help_text='Desmarcar para ocultar al barbero sin eliminar su historial'
+    )
+    is_owner = models.BooleanField(
+        default=False,
+        verbose_name='Es el dueño',
+        help_text='Marcar si este barbero es el dueño del negocio (recibe 100% de sus cortes)'
+    )
+    porcentaje_casa = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=40.00,
+        verbose_name='Porcentaje para la Casa (%)',
+        help_text='Porcentaje que se queda la casa por cada corte (ej: 40.00 significa 40%)'
     )
     color_hex = models.CharField(
         max_length=7,
@@ -240,6 +258,15 @@ class Turno(models.Model):
         verbose_name='Estado'
     )
     
+    # Método de pago (se registra al marcar como REALIZADO)
+    metodo_pago = models.CharField(
+        max_length=20,
+        choices=MetodoPagoTurno.choices,
+        null=True,
+        blank=True,
+        verbose_name='Método de pago'
+    )
+
     # Notas adicionales
     notas = models.TextField(
         blank=True,

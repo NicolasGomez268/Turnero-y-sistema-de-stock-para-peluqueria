@@ -7,6 +7,10 @@ class ReservarTurnoSerializer(serializers.ModelSerializer):
     """
     Serializer para que los clientes puedan reservar turnos (público).
     """
+    # Usar PrimaryKeyRelatedField para aceptar IDs en lugar de objetos completos
+    barbero = serializers.PrimaryKeyRelatedField(queryset=Barbero.objects.filter(is_active=True))
+    servicio = serializers.PrimaryKeyRelatedField(queryset=Servicio.objects.filter(is_active=True))
+    
     class Meta:
         model = Turno
         fields = [
@@ -25,18 +29,6 @@ class ReservarTurnoSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("No se pueden reservar turnos en fechas pasadas")
         return value
     
-    def validate_barbero(self, value):
-        """Validar que el barbero esté activo"""
-        if not value.is_active:
-            raise serializers.ValidationError("El barbero seleccionado no está disponible")
-        return value
-    
-    def validate_servicio(self, value):
-        """Validar que el servicio esté activo"""
-        if not value.is_active:
-            raise serializers.ValidationError("El servicio seleccionado no está disponible")
-        return value
-    
     def validate(self, data):
         """Validar que el horario esté disponible"""
         from datetime import datetime
@@ -51,12 +43,12 @@ class ReservarTurnoSerializer(serializers.ModelSerializer):
         else:
             hora_obj = hora
         
-        # Verificar si ya existe un turno en ese horario
+        # Verificar si ya existe un turno pendiente en ese horario
         conflicto = Turno.objects.filter(
             fecha=fecha,
             hora=hora_obj,
             barbero=barbero,
-            estado__in=['PENDIENTE', 'CONFIRMADO']
+            estado='PENDIENTE'
         ).exists()
         
         if conflicto:

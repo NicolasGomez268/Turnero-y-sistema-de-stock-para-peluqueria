@@ -160,9 +160,11 @@ const api = {
    * PATCH /api/admin/turnos/{id}/marcar-realizado/
    * @param {number} turnoId - ID del turno
    */
-  marcarTurnoRealizado: async (turnoId) => {
+  marcarTurnoRealizado: async (turnoId, metodoPago = 'EFECTIVO') => {
     try {
-      const response = await apiClient.patch(`/admin/turnos/${turnoId}/marcar-realizado/`);
+      const response = await apiClient.patch(`/admin/turnos/${turnoId}/marcar-realizado/`, {
+        metodo_pago: metodoPago,
+      });
       return response.data;
     } catch (error) {
       console.error('Error al marcar turno realizado:', error);
@@ -181,6 +183,67 @@ const api = {
       return response.data;
     } catch (error) {
       console.error('Error al cancelar turno:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Crear turno manualmente (para walk-ins)
+   * POST /api/admin/turnos/manual/
+   * @param {Object} data - Datos del turno (barbero_id, servicio_id, fecha, hora, cliente_nombre, cliente_telefono, notas)
+   */
+  createTurnoManual: async (data) => {
+    try {
+      const response = await apiClient.post('/admin/turnos/manual/', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error al crear turno manual:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  // ===================================
+  // GESTIÓN DE SERVICIOS (CRUD)
+  // ===================================
+
+  /**
+   * Crear un nuevo servicio
+   * POST /api/servicios/
+   */
+  createServicio: async (data) => {
+    try {
+      const response = await apiClient.post('/servicios/', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error al crear servicio:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Actualizar un servicio existente
+   * PUT /api/servicios/{id}/
+   */
+  updateServicio: async (id, data) => {
+    try {
+      const response = await apiClient.put(`/servicios/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Error al actualizar servicio:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Eliminar un servicio
+   * DELETE /api/servicios/{id}/
+   */
+  deleteServicio: async (id) => {
+    try {
+      const response = await apiClient.delete(`/servicios/${id}/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error al eliminar servicio:', error);
       throw error.response?.data || error;
     }
   },
@@ -286,6 +349,196 @@ const api = {
       throw error.response?.data || error;
     }
   },
-};
 
+
+  // ===================================
+  // LIQUIDACIÓN Y CAJA
+  // ===================================
+
+  /**
+   * Obtener liquidación semanal de barberos
+   * GET /api/admin/liquidacion/?fecha_inicio=YYYY-MM-DD&fecha_fin=YYYY-MM-DD
+   * @param {string} fechaInicio - Fecha de inicio (YYYY-MM-DD)
+   * @param {string} fechaFin - Fecha de fin (YYYY-MM-DD)
+   */
+  getLiquidacion: async (fechaInicio, fechaFin) => {
+    try {
+      const params = {};
+      if (fechaInicio) params.fecha_inicio = fechaInicio;
+      if (fechaFin) params.fecha_fin = fechaFin;
+      
+      const response = await apiClient.get('/admin/liquidacion/', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener liquidación:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Obtener caja diaria
+   * GET /api/admin/caja-diaria/?fecha=YYYY-MM-DD
+   * @param {string} fecha - Fecha (YYYY-MM-DD), default: hoy
+   */
+  getCajaDiaria: async (fecha) => {
+    try {
+      const params = {};
+      if (fecha) params.fecha = fecha;
+      
+      const response = await apiClient.get('/admin/caja-diaria/', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener caja diaria:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Obtener métricas mensuales
+   * GET /api/admin/metricas-mensuales/?mes=2&anio=2026
+   * @param {number} mes - Número del mes (1-12)
+   * @param {number} anio - Año
+   */
+  getMetricasMensuales: async (mes, anio) => {
+    try {
+      const params = {};
+      if (mes) params.mes = mes;
+      if (anio) params.anio = anio;
+      
+      const response = await apiClient.get('/admin/metricas-mensuales/', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener métricas mensuales:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+
+  // ===================================
+  // INVENTARIO — PRODUCTOS
+  // ===================================
+
+  /**
+   * Listar productos
+   * GET /api/inventario/productos/
+   * @param {Object} filtros - { activo, categoria, con_stock }
+   */
+  getProductos: async (filtros = {}) => {
+    try {
+      const response = await apiClient.get('/inventario/productos/', { params: filtros });
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener productos:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Crear producto
+   * POST /api/inventario/productos/
+   */
+  createProducto: async (data) => {
+    try {
+      const response = await apiClient.post('/inventario/productos/', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error al crear producto:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Actualizar producto
+   * PUT /api/inventario/productos/{id}/
+   */
+  updateProducto: async (id, data) => {
+    try {
+      const response = await apiClient.put(`/inventario/productos/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Error al actualizar producto:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Eliminar producto
+   * DELETE /api/inventario/productos/{id}/
+   */
+  deleteProducto: async (id) => {
+    try {
+      const response = await apiClient.delete(`/inventario/productos/${id}/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error al eliminar producto:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Ajustar stock de un producto
+   * PATCH /api/inventario/productos/{id}/stock/
+   * @param {number} id - ID del producto
+   * @param {number} cantidad - Cantidad a ajustar
+   * @param {string} operacion - "agregar" | "restar" | "establecer"
+   */
+  ajustarStock: async (id, cantidad, operacion = 'agregar') => {
+    try {
+      const response = await apiClient.patch(`/inventario/productos/${id}/stock/`, { cantidad, operacion });
+      return response.data;
+    } catch (error) {
+      console.error('Error al ajustar stock:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Obtener categorías únicas
+   * GET /api/inventario/categorias/
+   */
+  getCategorias: async () => {
+    try {
+      const response = await apiClient.get('/inventario/categorias/');
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener categorías:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  // ===================================
+  // INVENTARIO — VENTAS
+  // ===================================
+
+  /**
+   * Listar ventas con resumen
+   * GET /api/inventario/ventas/
+   * @param {Object} filtros - { fecha, fecha_inicio, fecha_fin, producto_id }
+   */
+  getVentas: async (filtros = {}) => {
+    try {
+      const response = await apiClient.get('/inventario/ventas/', { params: filtros });
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener ventas:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Registrar una venta (descuenta stock automáticamente)
+   * POST /api/inventario/ventas/
+   * @param {Object} data - { producto, cantidad, precio_unitario, metodo_pago, vendedor, notas }
+   */
+  registrarVenta: async (data) => {
+    try {
+      const response = await apiClient.post('/inventario/ventas/', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error al registrar venta:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+};
 export default api;
