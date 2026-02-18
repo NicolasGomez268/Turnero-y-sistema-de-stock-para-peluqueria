@@ -2,11 +2,22 @@
 
 Sistema de gestión de turnos y administración para barbería.
 
+## 🚀 Deploy en Producción
+
+- **Backend**: PythonAnywhere
+- **Frontend**: Vercel
+- **Branch de producción**: `develop`
+
+Ver guías detalladas:
+- [Deploy Backend (PythonAnywhere)](./DEPLOY_PYTHONANYWHERE.md)
+- [Deploy Frontend (Vercel)](./DEPLOY_VERCEL.md)
+- [Checklist de Deploy](./DEPLOY_CHECKLIST.md)
+
 ## Stack Tecnológico
 
 - **Backend:** Django REST Framework
 - **Frontend:** React + Vite + Tailwind CSS
-- **Base de Datos:** SQLite (desarrollo) / PostgreSQL (producción)
+- **Base de Datos:** SQLite (desarrollo)
 
 ## Instalación
 

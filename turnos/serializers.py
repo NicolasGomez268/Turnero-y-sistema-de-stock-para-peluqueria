@@ -14,6 +14,8 @@ class BarberoSerializer(serializers.ModelSerializer):
             'foto',
             'telefono',
             'is_active',
+            'is_owner',
+            'porcentaje_casa',
             'color_hex',
             'fecha_ingreso',
             'cantidad_turnos_realizados'

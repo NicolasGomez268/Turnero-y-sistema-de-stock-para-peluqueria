@@ -448,7 +448,7 @@ const NuevoBarberoModal = ({ onClose, onSave }) => {
   const notification = useNotification();
   const [formData, setFormData] = useState({
     nombre: '',
-    especialidad: '',
+    telefono: '',
     is_active: true,
     is_owner: false,
     porcentaje_casa: 40,
@@ -498,15 +498,15 @@ const NuevoBarberoModal = ({ onClose, onSave }) => {
 
           <div>
             <label className="block text-gray-300 mb-2 font-semibold">
-              Especialidad (Opcional)
+              Teléfono (Opcional)
             </label>
             <input
-              type="text"
-              value={formData.especialidad}
-              onChange={(e) => setFormData({...formData, especialidad: e.target.value})}
+              type="tel"
+              value={formData.telefono}
+              onChange={(e) => setFormData({...formData, telefono: e.target.value})}
               className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg 
                        text-gray-300 focus:border-tincho-gold focus:outline-none"
-              placeholder="Ej: Cortes clásicos, Fade, Barba"
+              placeholder="Ej: +541112345678"
             />
           </div>
 

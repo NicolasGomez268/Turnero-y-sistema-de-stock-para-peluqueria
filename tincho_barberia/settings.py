@@ -58,6 +58,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'tincho_barberia.middleware.DisableCSRFForAPIMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -173,6 +174,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ],
@@ -191,12 +193,25 @@ CORS_ALLOWED_ORIGINS = config(
     cast=Csv()
 )
 
+# Allow all Vercel preview and production deployments
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
+]
+
 CORS_ALLOW_CREDENTIALS = True
 
 # CSRF Settings (for frontend AJAX requests)
 # Debe coincidir con CORS_ALLOWED_ORIGINS
 CSRF_TRUSTED_ORIGINS = config(
-    'CORS_ALLOWED_ORIGINS',
+    'CSRF_TRUSTED_ORIGINS',
     default='http://localhost:5173,http://localhost:5174,http://localhost:3000',
     cast=Csv()
 )
+
+# CSRF Cookie Settings para permitir que el frontend acceda
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = not DEBUG  # True en producción, False en desarrollo
+
+# Eximir la API de CSRF (usa Token Authentication)
+CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
