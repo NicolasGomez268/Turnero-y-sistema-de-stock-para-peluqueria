@@ -193,6 +193,11 @@ CORS_ALLOWED_ORIGINS = config(
     cast=Csv()
 )
 
+# Allow all Vercel preview and production deployments
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
+]
+
 CORS_ALLOW_CREDENTIALS = True
 
 # CSRF Settings (for frontend AJAX requests)
