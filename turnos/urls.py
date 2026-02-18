@@ -10,6 +10,7 @@ from .admin_views import (
     get_turnos_semanales,
     marcar_turno_realizado,
     cancelar_turno,
+    crear_turno_manual,
 )
 from .liquidacion_views import (
     liquidacion_semanal,

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Barbero, Servicio, Turno, EstadoTurno
+from .models import Barbero, Servicio, Turno, EstadoTurno, HorarioAtencion
 
 
 class BarberoSerializer(serializers.ModelSerializer):
@@ -23,6 +23,23 @@ class BarberoSerializer(serializers.ModelSerializer):
     def get_cantidad_turnos_realizados(self, obj):
         """Retorna la cantidad de turnos realizados por este barbero"""
         return obj.turnos.filter(estado=EstadoTurno.REALIZADO).count()
+
+
+class HorarioAtencionSerializer(serializers.ModelSerializer):
+    """Serializer para el modelo HorarioAtencion"""
+    
+    class Meta:
+        model = HorarioAtencion
+        fields = [
+            'id',
+            'barbero',
+            'dia_semana',
+            'hora_inicio',
+            'hora_fin',
+            'descanso_inicio',
+            'descanso_fin',
+            'is_active'
+        ]
 
 
 class ServicioSerializer(serializers.ModelSerializer):
@@ -123,8 +140,6 @@ class TurnoListSerializer(serializers.ModelSerializer):
             'cliente_nombre',
             'estado'
         ]
-<<<<<<< Updated upstream
-=======
 
 
 class TurnoAdminSerializer(serializers.ModelSerializer):
@@ -179,5 +194,3 @@ class ResumenCajaDiariaSerializer(serializers.Serializer):
     total_ventas_productos = serializers.DecimalField(max_digits=10, decimal_places=2)
     total_general = serializers.DecimalField(max_digits=10, decimal_places=2)
     desglose_metodos_pago = serializers.DictField()
-        
->>>>>>> Stashed changes
