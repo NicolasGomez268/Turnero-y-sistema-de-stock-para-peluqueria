@@ -58,6 +58,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'tincho_barberia.middleware.DisableCSRFForAPIMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -206,3 +207,6 @@ CSRF_TRUSTED_ORIGINS = config(
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = 'None'
 CSRF_COOKIE_SECURE = not DEBUG  # True en producción, False en desarrollo
+
+# Eximir la API de CSRF (usa Token Authentication)
+CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
