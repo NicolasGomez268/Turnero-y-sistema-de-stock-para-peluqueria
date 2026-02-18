@@ -173,6 +173,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ],
@@ -200,3 +201,8 @@ CSRF_TRUSTED_ORIGINS = config(
     default='http://localhost:5173,http://localhost:5174,http://localhost:3000',
     cast=Csv()
 )
+
+# CSRF Cookie Settings para permitir que el frontend acceda
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = not DEBUG  # True en producción, False en desarrollo
