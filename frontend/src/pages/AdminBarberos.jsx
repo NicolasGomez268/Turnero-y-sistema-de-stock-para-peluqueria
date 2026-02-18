@@ -498,16 +498,15 @@ const NuevoBarberoModal = ({ onClose, onSave }) => {
 
           <div>
             <label className="block text-gray-300 mb-2 font-semibold">
-              Teléfono *
+              Teléfono (Opcional)
             </label>
             <input
               type="tel"
-              required
               value={formData.telefono}
               onChange={(e) => setFormData({...formData, telefono: e.target.value})}
               className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg 
                        text-gray-300 focus:border-tincho-gold focus:outline-none"
-              placeholder="Ej: +54 9 11 1234-5678"
+              placeholder="Ej: +541112345678"
             />
           </div>
 

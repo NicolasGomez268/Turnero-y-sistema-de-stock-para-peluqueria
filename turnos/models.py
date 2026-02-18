@@ -41,6 +41,8 @@ class Barbero(models.Model):
     telefono = models.CharField(
         validators=[telefono_regex],
         max_length=17,
+        blank=True,
+        null=True,
         verbose_name='Teléfono'
     )
     is_active = models.BooleanField(
