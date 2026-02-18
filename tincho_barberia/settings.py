@@ -196,7 +196,7 @@ CORS_ALLOW_CREDENTIALS = True
 # CSRF Settings (for frontend AJAX requests)
 # Debe coincidir con CORS_ALLOWED_ORIGINS
 CSRF_TRUSTED_ORIGINS = config(
-    'CORS_ALLOWED_ORIGINS',
+    'CSRF_TRUSTED_ORIGINS',
     default='http://localhost:5173,http://localhost:5174,http://localhost:3000',
     cast=Csv()
 )
