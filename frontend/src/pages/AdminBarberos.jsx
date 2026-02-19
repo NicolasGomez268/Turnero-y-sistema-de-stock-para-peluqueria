@@ -448,7 +448,7 @@ const NuevoBarberoModal = ({ onClose, onSave }) => {
   const notification = useNotification();
   const [formData, setFormData] = useState({
     nombre: '',
-    telefono: '',
+      telefono: '',
     is_active: true,
     is_owner: false,
     porcentaje_casa: 40,

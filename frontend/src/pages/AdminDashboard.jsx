@@ -5,6 +5,7 @@ import TurnoAdminCard from '../components/TurnoAdminCard';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import api from '../services/api';
+import pushNotifications from '../services/pushNotifications';
 
 const TURNOS_POR_PAGINA = 10;
 
@@ -102,6 +103,9 @@ const AdminDashboard = () => {
   };
 
   const handleCancelar = async (turnoId) => {
+    // Encontrar el turno para obtener datos del cliente
+    const turno = turnos.find(t => t.id === turnoId);
+    
     const confirmed = await notification.confirm('¿Estás seguro de cancelar este turno?');
     if (!confirmed) return;
 
@@ -110,11 +114,51 @@ const AdminDashboard = () => {
       await api.cancelarTurno(turnoId);
       await cargarDatos();
       notification.success('Turno cancelado correctamente');
+      
+      // Intentar enviar notificación push (si el cliente dio permiso)
+      if (pushNotifications.getPermissionStatus() === 'granted') {
+        await pushNotifications.notificarCancelacion({
+          id: turno.id,
+          cliente_nombre: turno.cliente_nombre,
+          fecha: formatearFecha(turno.fecha),
+          hora: turno.hora,
+          barbero_nombre: turno.barbero_nombre
+        });
+      }
+      
+      // Si el turno tiene teléfono, preguntar si quiere avisar por WhatsApp
+      if (turno?.cliente_telefono) {
+        setTimeout(async () => {
+          const avisarWhatsApp = await notification.confirm(
+            `¿Deseas avisar a ${turno.cliente_nombre} por WhatsApp?`,
+            'Notificar cancelación'
+          );
+          
+          if (avisarWhatsApp) {
+            // Formatear teléfono (quitar espacios, guiones, etc)
+            const telefono = turno.cliente_telefono.replace(/\D/g, '');
+            
+            // Mensaje pre-escrito
+            const mensaje = encodeURIComponent(
+              `Hola ${turno.cliente_nombre}! Lamentamos informarte que tu turno del ${formatearFecha(turno.fecha)} a las ${turno.hora} con ${turno.barbero_nombre} ha sido cancelado. Por favor contactanos para reagendar. Disculpa las molestias.`
+            );
+            
+            // Abrir WhatsApp
+            window.open(`https://wa.me/${telefono}?text=${mensaje}`, '_blank');
+          }
+        }, 500);
+      }
     } catch (err) {
       notification.error('Error al cancelar turno: ' + err.message);
     } finally {
       setActionLoading(false);
     }
+  };
+  
+  // Función auxiliar para formatear fecha
+  const formatearFecha = (fecha) => {
+    const [year, month, day] = fecha.split('-');
+    return `${day}/${month}/${year}`;
   };
 
   const handleLogout = async () => {

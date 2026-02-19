@@ -274,7 +274,7 @@ const api = {
    */
   updateBarbero: async (barberoId, data) => {
     try {
-      const response = await apiClient.put(`/barberos/${barberoId}/`, data);
+      const response = await apiClient.patch(`/barberos/${barberoId}/`, data);
       return response.data;
     } catch (error) {
       console.error('Error al actualizar barbero:', error);

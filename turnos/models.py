@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 from django.core.validators import RegexValidator
 
 
@@ -283,7 +284,15 @@ class Turno(models.Model):
         verbose_name = 'Turno'
         verbose_name_plural = 'Turnos'
         ordering = ['-fecha', '-hora']
-        unique_together = ['fecha', 'hora', 'barbero']
+        constraints = [
+            # Solo se impide duplicar turnos PENDIENTES en el mismo horario/barbero
+            # Los turnos CANCELADOS liberan el horario para nuevas reservas
+            models.UniqueConstraint(
+                fields=['fecha', 'hora', 'barbero'],
+                condition=Q(estado='PENDIENTE'),
+                name='unique_turno_pendiente'
+            )
+        ]
         indexes = [
             models.Index(fields=['fecha', 'barbero']),
             models.Index(fields=['estado']),
