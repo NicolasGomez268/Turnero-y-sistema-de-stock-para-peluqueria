@@ -28,7 +28,7 @@ def manage_barberos_list(request):
         else:
             barberos = Barbero.objects.filter(is_active=True).order_by('nombre')
         
-        serializer = BarberoSerializer(barberos, many=True)
+        serializer = BarberoSerializer(barberos, many=True, context={'request': request})
         return JsonResponse(serializer.data, safe=False)
     
     elif request.method == 'POST':
@@ -50,7 +50,7 @@ def manage_barberos_list(request):
             porcentaje_casa=data.get('porcentaje_casa', 40.00)
         )
             
-            serializer = BarberoSerializer(barbero)
+            serializer = BarberoSerializer(barbero, context={'request': request})
             return JsonResponse(serializer.data, status=201)
         
         except json.JSONDecodeError:
@@ -89,7 +89,7 @@ def update_barbero(request, barbero_id):
         
         barbero.save()
         
-        serializer = BarberoSerializer(barbero)
+        serializer = BarberoSerializer(barbero, context={'request': request})
         return JsonResponse(serializer.data)
     
     except json.JSONDecodeError:
@@ -121,7 +121,7 @@ def create_barbero(request):
             is_active=data.get('is_active', True)
         )
         
-        serializer = BarberoSerializer(barbero)
+        serializer = BarberoSerializer(barbero, context={'request': request})
         return JsonResponse(serializer.data, status=201)
     
     except json.JSONDecodeError:
@@ -153,7 +153,7 @@ def upload_barbero_photo(request, barbero_id):
     barbero.foto = request.FILES['foto']
     barbero.save()
     
-    serializer = BarberoSerializer(barbero)
+    serializer = BarberoSerializer(barbero, context={'request': request})
     return JsonResponse(serializer.data)
 
 
