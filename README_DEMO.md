@@ -10,7 +10,7 @@ Esta es la **rama de demostración** del proyecto. Está completamente separada 
 
 ## 🔗 URLs
 - **Frontend Demo:** https://tincho-barberia-git-demo-nicolas-projects-962652f9.vercel.app
-- **Backend Demo:** https://tinchobarberdemo.pythonanywhere.com
+- **Backend Demo:** https://barberdemo.pythonanywhere.com
 - **Frontend Producción:** https://tincho-barberia.vercel.app (NO SE VE AFECTADO)
 
 ## ⚙️ Configuración

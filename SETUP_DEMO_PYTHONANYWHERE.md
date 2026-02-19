@@ -1,14 +1,12 @@
 # 🚀 Configuración Backend DEMO en PythonAnywhere
 
-## Paso 1: Crear Cuenta Nueva en PythonAnywhere
+## Paso 1: ✅ Cuenta Creada
 
-1. Ve a: https://www.pythonanywhere.com/registration/register/beginner/
-2. Datos sugeridos:
-   - **Username:** `tinchobarberdemo` (o el que prefieras)
-   - **Email:** Tu email
-   - **Password:** Guarda la contraseña
-3. Confirma el email
-4. Login en: https://www.pythonanywhere.com
+Ya tienes tu cuenta creada con el username: **BarberDemo**
+
+Tu subdominio será: **barberdemo.pythonanywhere.com**
+
+Login en: https://www.pythonanywhere.com
 
 ## Paso 2: Clonar el Repositorio
 
@@ -23,8 +21,8 @@ git checkout demo
 ## Paso 3: Crear Entorno Virtual
 
 ```bash
-mkvirtualenv --python=/usr/bin/python3.10 tinchobarberdemo
-workon tinchobarberdemo
+mkvirtualenv --python=/usr/bin/python3.10 barberdemo
+workon barberdemo
 pip install -r requirements.txt
 ```
 
@@ -39,7 +37,7 @@ Pega este contenido:
 ```env
 SECRET_KEY=demo-secret-key-change-in-production-xyz789
 DEBUG=False
-ALLOWED_HOSTS=tinchobarberdemo.pythonanywhere.com
+ALLOWED_HOSTS=barberdemo.pythonanywhere.com
 CORS_ALLOWED_ORIGINS=https://tincho-barberia-git-demo-nicolas-projects-962652f9.vercel.app
 DATABASE_URL=sqlite:///db.sqlite3
 ```
@@ -74,17 +72,17 @@ python manage.py shell < load_demo_data.py
 
 **Source code:**
 ```
-/home/tinchobarberdemo/Turnero-y-sistema-de-stock-para-peluqueria
+/home/BarberDemo/Turnero-y-sistema-de-stock-para-peluqueria
 ```
 
 **Working directory:**
 ```
-/home/tinchobarberdemo/Turnero-y-sistema-de-stock-para-peluqueria
+/home/BarberDemo/Turnero-y-sistema-de-stock-para-peluqueria
 ```
 
 **Virtualenv:**
 ```
-/home/tinchobarberdemo/.virtualenvs/tinchobarberdemo
+/home/BarberDemo/.virtualenvs/barberdemo
 ```
 
 ### Editar WSGI file:
@@ -97,7 +95,7 @@ import sys
 from dotenv import load_dotenv
 
 # Cargar variables de entorno
-project_folder = '/home/tinchobarberdemo/Turnero-y-sistema-de-stock-para-peluqueria'
+project_folder = '/home/BarberDemo/Turnero-y-sistema-de-stock-para-peluqueria'
 load_dotenv(os.path.join(project_folder, '.env'))
 
 # Add project to path
@@ -120,8 +118,8 @@ En la pestaña **Web**, sección **Static files**:
 
 | URL | Directory |
 |-----|-----------|
-| /static/ | /home/tinchobarberdemo/Turnero-y-sistema-de-stock-para-peluqueria/staticfiles |
-| /media/ | /home/tinchobarberdemo/Turnero-y-sistema-de-stock-para-peluqueria/media |
+| /static/ | /home/BarberDemo/Turnero-y-sistema-de-stock-para-peluqueria/staticfiles |
+| /media/ | /home/BarberDemo/Turnero-y-sistema-de-stock-para-peluqueria/media |
 
 Luego en Bash console:
 
@@ -131,13 +129,13 @@ python manage.py collectstatic --no-input
 
 ## Paso 9: Recargar Web App
 
-En la pestaña **Web**, click en el botón verde **Reload tinchobarberdemo.pythonanywhere.com**
+En la pestaña **Web**, click en el botón verde **Reload barberdemo.pythonanywhere.com**
 
 ## Paso 10: Verificar
 
 Prueba estos URLs:
-- Backend: https://tinchobarberdemo.pythonanywhere.com/admin
-- API: https://tinchobarberdemo.pythonanywhere.com/api/barberos/
+- Backend: https://barberdemo.pythonanywhere.com/admin
+- API: https://barberdemo.pythonanywhere.com/api/barberos/
 
 ---
 
@@ -153,8 +151,8 @@ Prueba estos URLs:
 ## ✅ URLs Finales
 
 - **Frontend Demo:** https://tincho-barberia-git-demo-nicolas-projects-962652f9.vercel.app
-- **Backend Demo:** https://tinchobarberdemo.pythonanywhere.com
-- **Admin Panel:** https://tinchobarberdemo.pythonanywhere.com/admin
+- **Backend Demo:** https://barberdemo.pythonanywhere.com
+- **Admin Panel:** https://barberdemo.pythonanywhere.com/admin
 
 ---
 
