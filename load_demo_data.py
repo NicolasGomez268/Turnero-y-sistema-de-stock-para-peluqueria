@@ -14,6 +14,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tincho_barberia.settings')
 django.setup()
 
 from turnos.models import Barbero, Servicio, Turno
+from inventario.models import Producto
 from django.contrib.auth.models import User
 
 print("🎭 Cargando datos de demostración...")
@@ -22,6 +23,7 @@ print("🎭 Cargando datos de demostración...")
 print("Limpiando datos anteriores...")
 Turno.objects.all().delete()
 Servicio.objects.all().delete()
+Producto.objects.all().delete()
 Barbero.objects.filter(is_owner=False).delete()
 
 # Crear barberos demo
@@ -102,6 +104,121 @@ for data in servicios_data:
     servicios.append(servicio)
     print(f"  ✓ Servicio creado: {servicio.nombre} - ${servicio.precio}")
 
+# Crear productos demo
+print("\nCreando productos de inventario...")
+productos_data = [
+    # Productos capilares
+    {
+        "nombre": "Pomada Mate",
+        "variante": "100g",
+        "categoria": "Capilar",
+        "precio_costo": 3500.00,
+        "precio_venta": 6500.00,
+        "stock_actual": 15,
+        "descripcion": "Pomada de fijación fuerte con acabado mate",
+        "is_active": True,
+    },
+    {
+        "nombre": "Shampoo Anticaspa",
+        "variante": "250ml",
+        "categoria": "Capilar",
+        "precio_costo": 2800.00,
+        "precio_venta": 5200.00,
+        "stock_actual": 20,
+        "descripcion": "Shampoo medicado anticaspa",
+        "is_active": True,
+    },
+    {
+        "nombre": "Cera para Bigote",
+        "variante": "30g",
+        "categoria": "Capilar",
+        "precio_costo": 2000.00,
+        "precio_venta": 4000.00,
+        "stock_actual": 10,
+        "descripcion": "Cera modeladora para bigote",
+        "is_active": True,
+    },
+    {
+        "nombre": "Aceite para Barba",
+        "variante": "50ml",
+        "categoria": "Capilar",
+        "precio_costo": 3200.00,
+        "precio_venta": 6000.00,
+        "stock_actual": 12,
+        "descripcion": "Aceite hidratante con aroma a madera",
+        "is_active": True,
+    },
+    # Ropa
+    {
+        "nombre": "Remera Barbería",
+        "variante": "M",
+        "categoria": "Ropa",
+        "precio_costo": 5000.00,
+        "precio_venta": 9500.00,
+        "stock_actual": 8,
+        "descripcion": "Remera negra con logo de barbería",
+        "is_active": True,
+    },
+    {
+        "nombre": "Remera Barbería",
+        "variante": "L",
+        "categoria": "Ropa",
+        "precio_costo": 5000.00,
+        "precio_venta": 9500.00,
+        "stock_actual": 5,
+        "descripcion": "Remera negra con logo de barbería",
+        "is_active": True,
+    },
+    {
+        "nombre": "Buzo Oversize",
+        "variante": "XL",
+        "categoria": "Ropa",
+        "precio_costo": 12000.00,
+        "precio_venta": 22000.00,
+        "stock_actual": 3,
+        "descripcion": "Buzo oversize negro premium",
+        "is_active": True,
+    },
+    # Accesorios
+    {
+        "nombre": "Peine de Madera",
+        "variante": None,
+        "categoria": "Accesorios",
+        "precio_costo": 1500.00,
+        "precio_venta": 3000.00,
+        "stock_actual": 25,
+        "descripcion": "Peine de madera natural para barba",
+        "is_active": True,
+    },
+    {
+        "nombre": "Tijeras Profesionales",
+        "variante": "6 pulgadas",
+        "categoria": "Accesorios",
+        "precio_costo": 8000.00,
+        "precio_venta": 15000.00,
+        "stock_actual": 4,
+        "descripcion": "Tijeras de acero inoxidable para barberos",
+        "is_active": True,
+    },
+    {
+        "nombre": "Navaja de Afeitar",
+        "variante": None,
+        "categoria": "Accesorios",
+        "precio_costo": 6500.00,
+        "precio_venta": 12000.00,
+        "stock_actual": 6,
+        "descripcion": "Navaja clásica con mango de madera",
+        "is_active": True,
+    },
+]
+
+productos = []
+for data in productos_data:
+    producto = Producto.objects.create(**data)
+    productos.append(producto)
+    variante_str = f" ({producto.variante})" if producto.variante else ""
+    print(f"  ✓ Producto creado: {producto.nombre}{variante_str} - ${producto.precio_venta} - Stock: {producto.stock_actual}")
+
 # Crear turnos demo (próxima semana)
 print("\nCreando turnos de ejemplo...")
 hoy = timezone.now().date()
@@ -169,8 +286,7 @@ print("\n" + "="*60)
 print("✅ DATOS DE DEMOSTRACIÓN CARGADOS EXITOSAMENTE")
 print("="*60)
 print(f"📊 Barberos creados: {Barbero.objects.count()}")
-print(f"💈 Servicios creados: {Servicio.objects.count()}")
-print(f"� Turnos creados: {Turno.objects.count()}")
+print(f"💈 Servicios creados: {Servicio.objects.count()}")print(f"📦 Productos creados: {Producto.objects.count()}")print(f"� Turnos creados: {Turno.objects.count()}")
 print("="*60)
 print("\n🎉 ¡Listo! Tu base de datos demo está configurada.")
 print("\n📋 Usuarios de prueba:")
