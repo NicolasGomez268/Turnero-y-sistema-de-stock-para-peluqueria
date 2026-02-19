@@ -116,6 +116,38 @@ const AdminBarberos = () => {
 const BarberoCard = ({ barbero, onToggleActivo, onEditHorarios, onRefresh }) => {
   const notification = useNotification();
   const [updatingPhoto, setUpdatingPhoto] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nombreTemp, setNombreTemp] = useState(barbero.nombre);
+  const [savingName, setSavingName] = useState(false);
+
+  const handleSaveName = async () => {
+    const nuevoNombre = nombreTemp.trim();
+    if (!nuevoNombre || nuevoNombre === barbero.nombre) {
+      setEditingName(false);
+      setNombreTemp(barbero.nombre);
+      return;
+    }
+    setSavingName(true);
+    try {
+      await api.updateBarbero(barbero.id, { nombre: nuevoNombre });
+      await onRefresh();
+      notification.success('✅ Nombre actualizado');
+      setEditingName(false);
+    } catch (err) {
+      notification.error('Error al actualizar nombre: ' + err.message);
+      setNombreTemp(barbero.nombre);
+    } finally {
+      setSavingName(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') handleSaveName();
+    if (e.key === 'Escape') {
+      setEditingName(false);
+      setNombreTemp(barbero.nombre);
+    }
+  };
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
@@ -172,9 +204,35 @@ const BarberoCard = ({ barbero, onToggleActivo, onEditHorarios, onRefresh }) => 
 
       {/* Info */}
       <div className="text-center mb-4">
-        <h3 className="text-xl font-bold text-white mb-1">
-          {barbero.nombre}
-        </h3>
+        {editingName ? (
+          <div className="flex items-center justify-center gap-2">
+            <input
+              type="text"
+              value={nombreTemp}
+              onChange={(e) => setNombreTemp(e.target.value)}
+              onBlur={handleSaveName}
+              onKeyDown={handleKeyDown}
+              autoFocus
+              disabled={savingName}
+              className="bg-gray-800 text-white text-center text-lg font-bold 
+                       border border-oro-fuerte rounded-lg px-3 py-1 w-full
+                       focus:outline-none focus:ring-2 focus:ring-oro-base"
+            />
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-2">
+            <h3 className="text-xl font-bold text-white mb-1">
+              {barbero.nombre}
+            </h3>
+            <button
+              onClick={() => { setNombreTemp(barbero.nombre); setEditingName(true); }}
+              className="text-gray-400 hover:text-oro-base transition-colors mb-1"
+              title="Editar nombre"
+            >
+              ✏️
+            </button>
+          </div>
+        )}
         {barbero.especialidad && (
           <p className="text-sm text-gray-400">{barbero.especialidad}</p>
         )}
