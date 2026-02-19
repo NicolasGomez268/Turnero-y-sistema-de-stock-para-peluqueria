@@ -22,6 +22,7 @@ Esta es la **rama de demostración** del proyecto. Está completamente separada 
 El sistema incluye:
 - 3 barberos de ejemplo
 - 5 servicios comunes
+- 10 productos de inventario (capilares, ropa, accesorios)
 - Turnos de muestra
 - Usuario admin demo
 

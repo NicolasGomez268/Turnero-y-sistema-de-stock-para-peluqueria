@@ -144,7 +144,8 @@ Prueba estos URLs:
 - **Usuario Admin:** demo / Demo2026!
 - **3 Barberos:** Juan, Carlos, Diego
 - **5 Servicios:** Corte, Barba, Corte + Barba, Cejas, Depilación facial
-- **Turnos de muestra:** Varios turnos de ejemplo
+- **10 Productos:** Pomadas, shampoo, aceites, remeras, buzos, accesorios
+- **5 Turnos de muestra:** Varios turnos de demostración
 
 ---
 
