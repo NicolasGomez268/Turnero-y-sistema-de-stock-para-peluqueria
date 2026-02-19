@@ -7,6 +7,7 @@ Esta es la **rama de demostración** del proyecto. Está completamente separada 
 - Mostrar el sistema a clientes potenciales
 - Datos ficticios preconfigurados
 - Base de datos independiente
+- Entorno demo completamente funcional
 
 ## 🔗 URLs
 - **Frontend Demo:** https://tincho-barberia-git-demo-nicolas-projects-962652f9.vercel.app
