@@ -224,13 +224,7 @@ def eliminar_turno(request, turno_id):
             status=status.HTTP_404_NOT_FOUND
         )
     
-    # Solo permitir eliminar turnos PENDIENTES o CANCELADOS
-    if turno.estado == 'REALIZADO':
-        return Response(
-            {'error': 'No se puede eliminar un turno ya realizado'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
+    # Permitir eliminar cualquier turno (admin tiene control total)
     turno.delete()
     
     return Response({
@@ -264,12 +258,7 @@ def editar_turno(request, turno_id):
             status=status.HTTP_404_NOT_FOUND
         )
     
-    # Solo permitir editar turnos PENDIENTES
-    if turno.estado != 'PENDIENTE':
-        return Response(
-            {'error': 'Solo se pueden editar turnos pendientes'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+    # Permitir editar cualquier turno (admin tiene control total)
     
     # Validar barbero
     barbero_id = request.data.get('barbero_id')
