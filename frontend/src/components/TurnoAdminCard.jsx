@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import PropTypes from 'prop-types';
+import { useState } from 'react';
 
 const METODOS_PAGO = [
   { value: 'EFECTIVO',      label: 'Efectivo',     icon: '💵', color: 'border-green-500 hover:bg-green-500/20 text-green-400' },
@@ -7,8 +7,9 @@ const METODOS_PAGO = [
   { value: 'TARJETA',       label: 'Tarjeta',       icon: '💳', color: 'border-purple-500 hover:bg-purple-500/20 text-purple-400' },
 ];
 
-const TurnoAdminCard = ({ turno, onMarcarAsistio, onCancelar, loading }) => {
+const TurnoAdminCard = ({ turno, onMarcarAsistio, onCancelar, onEditar, onEliminar, loading }) => {
   const [seleccionandoPago, setSeleccionandoPago] = useState(false);
+  const [mostrandoAcciones, setMostrandoAcciones] = useState(false);
 
   const getEstadoColor = (estado) => {
     switch (estado) {
@@ -106,6 +107,46 @@ const TurnoAdminCard = ({ turno, onMarcarAsistio, onCancelar, loading }) => {
               ← Volver
             </button>
           </div>
+        ) : mostrandoAcciones ? (
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setMostrandoAcciones(false);
+                  onEditar(turno);
+                }}
+                disabled={loading}
+                className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 
+                         text-white font-semibold rounded-lg transition-all duration-200
+                         disabled:opacity-50 disabled:cursor-not-allowed
+                         flex items-center justify-center gap-2 text-sm"
+              >
+                <span>✏️</span>
+                <span>Editar</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setMostrandoAcciones(false);
+                  onEliminar(turno.id);
+                }}
+                disabled={loading}
+                className="flex-1 py-2 px-3 bg-red-700 hover:bg-red-800 
+                         text-white font-semibold rounded-lg transition-all duration-200
+                         disabled:opacity-50 disabled:cursor-not-allowed
+                         flex items-center justify-center gap-2 text-sm"
+              >
+                <span>🗑️</span>
+                <span>Eliminar</span>
+              </button>
+            </div>
+            <button
+              onClick={() => setMostrandoAcciones(false)}
+              className="w-full py-1.5 text-gray-500 hover:text-gray-300 text-xs transition-colors"
+            >
+              ← Volver
+            </button>
+          </div>
         ) : (
           <div className="flex flex-col gap-2">
             {esFuturo && (
@@ -119,6 +160,8 @@ const TurnoAdminCard = ({ turno, onMarcarAsistio, onCancelar, loading }) => {
                 disabled={loading || esFuturo}
                 className="flex-1 py-2 px-4 bg-oro-base hover:bg-oro-brillo 
                          text-tincho-dark font-bold rounded-lg transition-all duration-200
+  onEditar: PropTypes.func.isRequired,
+  onEliminar: PropTypes.func.isRequired,
                          disabled:opacity-30 disabled:cursor-not-allowed
                          flex items-center justify-center gap-2"
               >
@@ -138,6 +181,17 @@ const TurnoAdminCard = ({ turno, onMarcarAsistio, onCancelar, loading }) => {
                 <span>Cancelar</span>
               </button>
             </div>
+            
+            {/* Botón de más opciones */}
+            <button
+              onClick={() => setMostrandoAcciones(true)}
+              disabled={loading}
+              className="w-full py-1.5 text-gray-400 hover:text-gray-200 text-xs 
+                       transition-colors border border-gray-700 hover:border-gray-500 
+                       rounded-lg disabled:opacity-50"
+            >
+              ⚙️ Más opciones
+            </button>
           </div>
         )
       )}

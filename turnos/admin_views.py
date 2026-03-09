@@ -208,6 +208,152 @@ def cancelar_turno(request, turno_id):
     })
 
 
+@api_view(['DELETE'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def eliminar_turno(request, turno_id):
+    """
+    Eliminar permanentemente un turno
+    DELETE /api/admin/turnos/{id}/eliminar/
+    """
+    try:
+        turno = Turno.objects.get(id=turno_id)
+    except Turno.DoesNotExist:
+        return Response(
+            {'error': 'Turno no encontrado'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Solo permitir eliminar turnos PENDIENTES o CANCELADOS
+    if turno.estado == 'REALIZADO':
+        return Response(
+            {'error': 'No se puede eliminar un turno ya realizado'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    turno.delete()
+    
+    return Response({
+        'message': 'Turno eliminado exitosamente'
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['PUT', 'PATCH'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def editar_turno(request, turno_id):
+    """
+    Editar un turno existente
+    PUT/PATCH /api/admin/turnos/{id}/editar/
+    
+    Body: {
+        "barbero_id": 1,
+        "servicio_id": 2,
+        "fecha": "2026-03-10",
+        "hora": "14:30",
+        "cliente_nombre": "Juan Pérez",
+        "cliente_telefono": "+5491123456789",
+        "notas": "Cliente nuevo"
+    }
+    """
+    try:
+        turno = Turno.objects.get(id=turno_id)
+    except Turno.DoesNotExist:
+        return Response(
+            {'error': 'Turno no encontrado'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Solo permitir editar turnos PENDIENTES
+    if turno.estado != 'PENDIENTE':
+        return Response(
+            {'error': 'Solo se pueden editar turnos pendientes'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Validar barbero
+    barbero_id = request.data.get('barbero_id')
+    if barbero_id:
+        try:
+            barbero = Barbero.objects.get(id=barbero_id)
+            turno.barbero = barbero
+        except Barbero.DoesNotExist:
+            return Response(
+                {'error': 'Barbero no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    # Validar servicio
+    servicio_id = request.data.get('servicio_id')
+    if servicio_id:
+        try:
+            servicio = Servicio.objects.get(id=servicio_id, is_active=True)
+            turno.servicio = servicio
+        except Servicio.DoesNotExist:
+            return Response(
+                {'error': 'Servicio no encontrado o inactivo'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    # Actualizar fecha
+    fecha_str = request.data.get('fecha')
+    if fecha_str:
+        try:
+            turno.fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+        except ValueError:
+            return Response(
+                {'error': 'Formato de fecha inválido. Use YYYY-MM-DD'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    # Actualizar hora
+    hora_str = request.data.get('hora')
+    if hora_str:
+        try:
+            turno.hora = datetime.strptime(hora_str, '%H:%M').time()
+        except ValueError:
+            return Response(
+                {'error': 'Formato de hora inválido. Use HH:MM'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    # Actualizar datos del cliente
+    if 'cliente_nombre' in request.data:
+        turno.cliente_nombre = request.data['cliente_nombre']
+    
+    if 'cliente_telefono' in request.data:
+        turno.cliente_telefono = request.data['cliente_telefono']
+    
+    if 'notas' in request.data:
+        turno.notas = request.data['notas']
+    
+    # Verificar disponibilidad del nuevo horario
+    if fecha_str or hora_str or barbero_id:
+        conflicto = Turno.objects.filter(
+            barbero=turno.barbero,
+            fecha=turno.fecha,
+            hora=turno.hora,
+            estado='PENDIENTE'
+        ).exclude(id=turno.id).exists()
+        
+        if conflicto:
+            return Response(
+                {'error': 'Ya existe un turno en ese horario para el barbero seleccionado'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    turno.save()
+    
+    data = TurnoSerializer(turno).data
+    data['barbero_nombre'] = turno.barbero.nombre
+    data['servicio_nombre'] = turno.servicio.nombre
+    
+    return Response({
+        'message': 'Turno actualizado exitosamente',
+        'turno': data
+    })
+
+
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
