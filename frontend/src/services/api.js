@@ -191,6 +191,37 @@ const api = {
   },
 
   /**
+   * Eliminar turno permanentemente
+   * DELETE /api/admin/turnos/{id}/eliminar/
+   * @param {number} turnoId - ID del turno
+   */
+  eliminarTurno: async (turnoId) => {
+    try {
+      const response = await apiClient.delete(`/admin/turnos/${turnoId}/eliminar/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error al eliminar turno:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Editar turno existente
+   * PUT /api/admin/turnos/{id}/editar/
+   * @param {number} turnoId - ID del turno
+   * @param {Object} data - Datos actualizados del turno
+   */
+  editarTurno: async (turnoId, data) => {
+    try {
+      const response = await apiClient.put(`/admin/turnos/${turnoId}/editar/`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Error al editar turno:', error);
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
    * Crear turno manualmente (para walk-ins)
    * POST /api/admin/turnos/manual/
    * @param {Object} data - Datos del turno (barbero_id, servicio_id, fecha, hora, cliente_nombre, cliente_telefono, notas)

@@ -28,6 +28,8 @@ const AdminDashboard = () => {
   );
   const [filtroEstado, setFiltroEstado] = useState('TODOS'); // TODOS, PENDIENTE, REALIZADO
   const [modalNuevoTurno, setModalNuevoTurno] = useState(false);
+  const [modalEditarTurno, setModalEditarTurno] = useState(false);
+  const [turnoEditando, setTurnoEditando] = useState(null);
   const [paginaTurnos, setPaginaTurnos] = useState(1);
 
   // Cargar datos iniciales
@@ -150,6 +152,32 @@ const AdminDashboard = () => {
       }
     } catch (err) {
       notification.error('Error al cancelar turno: ' + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleEditar = (turno) => {
+    setTurnoEditando(turno);
+    setModalEditarTurno(true);
+  };
+
+  const handleEliminar = async (turnoId) => {
+    const turno = turnos.find(t => t.id === turnoId);
+    
+    const confirmed = await notification.confirm(
+      `¿Eliminar permanentemente el turno de ${turno.cliente_nombre}? Esta acción no se puede deshacer.`,
+      'Confirmar eliminación'
+    );
+    if (!confirmed) return;
+
+    setActionLoading(true);
+    try {
+      await api.eliminarTurno(turnoId);
+      await cargarDatos();
+      notification.success('Turno eliminado correctamente');
+    } catch (err) {
+      notification.error('Error al eliminar turno: ' + (err.error || err.message));
     } finally {
       setActionLoading(false);
     }
@@ -301,7 +329,9 @@ const AdminDashboard = () => {
             </p>
           </div>
         ) : (
-          /* Lista de Turnos */
+          /* Lista de onEditar={handleEditar}
+                      onEliminar={handleEliminar}
+                      Turnos */
           (() => {
             const turnosFiltrados = filtroEstado === 'TODOS'
               ? turnos
@@ -327,6 +357,8 @@ const AdminDashboard = () => {
                       turno={turno}
                       onMarcarAsistio={handleMarcarAsistio}
                       onCancelar={handleCancelar}
+                      onEditar={handleEditar}
+                      onEliminar={handleEliminar}
                       loading={actionLoading}
                     />
                   ))}
@@ -348,6 +380,22 @@ const AdminDashboard = () => {
           onClose={() => setModalNuevoTurno(false)}
           onSuccess={() => {
             setModalNuevoTurno(false);
+            cargarDatos();
+          }}
+        />
+      )}
+
+      {/* Modal Editar Turno */}
+      {modalEditarTurno && turnoEditando && (
+        <EditarTurnoModal
+          turno={turnoEditando}
+          onClose={() => {
+            setModalEditarTurno(false);
+            setTurnoEditando(null);
+          }}
+          onSuccess={() => {
+            setModalEditarTurno(false);
+            setTurnoEditando(null);
             cargarDatos();
           }}
         />
@@ -766,6 +814,203 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
               {loading ? 'Creando...' : 'Confirmar Reserva'}
             </button>
           )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ===================================
+// COMPONENTE: EditarTurnoModal
+// ===================================
+const EditarTurnoModal = ({ turno, onClose, onSuccess }) => {
+  const notification = useNotification();
+  const [loading, setLoading] = useState(false);
+  const [barberos, setBarberos] = useState([]);
+  const [servicios, setServicios] = useState([]);
+  const [datos, setDatos] = useState({
+    barbero_id: turno.barbero_id,
+    servicio_id: turno.servicio_id,
+    fecha: turno.fecha,
+    hora: turno.hora,
+    cliente_nombre: turno.cliente_nombre,
+    cliente_telefono: turno.cliente_telefono || '',
+    notas: turno.notas || ''
+  });
+
+  useEffect(() => {
+    cargarBarberos();
+    cargarServicios();
+  }, []);
+
+  const cargarBarberos = async () => {
+    try {
+      const data = await api.getBarberos();
+      setBarberos(data);
+    } catch (error) {
+      notification.error('Error al cargar barberos');
+    }
+  };
+
+  const cargarServicios = async () => {
+    try {
+      const data = await api.getServicios();
+      setServicios(data.filter(s => s.is_active));
+    } catch (error) {
+      notification.error('Error al cargar servicios');
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!datos.cliente_nombre || !datos.fecha) {
+      notification.error('Completa los campos obligatorios');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await api.editarTurno(turno.id, datos);
+      notification.success('✅ Turno actualizado exitosamente');
+      onSuccess();
+    } catch (error) {
+      notification.error('Error al actualizar turno: ' + (error.error || 'Error desconocido'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 admin-modal-backdrop flex items-center justify-center z-50 p-4">
+      <div className="admin-modal-gold rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="sticky top-0 bg-gradient-to-b from-black/80 to-transparent border-b border-oro-fuerte/30 p-6 flex items-center justify-between">
+          <div>
+            <h3 className="text-2xl font-bold text-white">Editar Turno</h3>
+            <p className="text-sm text-gray-400 mt-1">Modificar información del turno</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-2xl"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-6">
+          {/* Barbero */}
+          <div>
+            <label className="block text-gray-400 mb-2">Barbero</label>
+            <select
+              value={datos.barbero_id}
+              onChange={(e) => setDatos({ ...datos, barbero_id: parseInt(e.target.value) })}
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg 
+                       text-gray-200 focus:border-tincho-gold focus:ring-2 focus:ring-tincho-gold/50"
+            >
+              {barberos.map(b => (
+                <option key={b.id} value={b.id}>
+                  {b.nombre} {!b.is_active && '(Inactivo)'}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Servicio */}
+          <div>
+            <label className="block text-gray-400 mb-2">Servicio</label>
+            <select
+              value={datos.servicio_id}
+              onChange={(e) => setDatos({ ...datos, servicio_id: parseInt(e.target.value) })}
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg 
+                       text-gray-200 focus:border-tincho-gold focus:ring-2 focus:ring-tincho-gold/50"
+            >
+              {servicios.map(s => (
+                <option key={s.id} value={s.id}>
+                  {s.nombre} - ${s.precio.toLocaleString()}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Fecha y Hora */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-gray-400 mb-2">Fecha</label>
+              <input
+                type="date"
+                value={datos.fecha}
+                onChange={(e) => setDatos({ ...datos, fecha: e.target.value })}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg 
+                         text-gray-200 focus:border-tincho-gold focus:ring-2 focus:ring-tincho-gold/50"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-400 mb-2">Hora</label>
+              <input
+                type="time"
+                value={datos.hora}
+                onChange={(e) => setDatos({ ...datos, hora: e.target.value })}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg 
+                         text-gray-200 focus:border-tincho-gold focus:ring-2 focus:ring-tincho-gold/50"
+              />
+            </div>
+          </div>
+
+          {/* Cliente */}
+          <div>
+            <label className="block text-gray-400 mb-2">Nombre del Cliente *</label>
+            <input
+              type="text"
+              value={datos.cliente_nombre}
+              onChange={(e) => setDatos({ ...datos, cliente_nombre: e.target.value })}
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg 
+                       text-gray-200 focus:border-tincho-gold focus:ring-2 focus:ring-tincho-gold/50"
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-400 mb-2">Teléfono</label>
+            <input
+              type="tel"
+              value={datos.cliente_telefono}
+              onChange={(e) => setDatos({ ...datos, cliente_telefono: e.target.value })}
+              placeholder="+54911..."
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg 
+                       text-gray-200 focus:border-tincho-gold focus:ring-2 focus:ring-tincho-gold/50"
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-400 mb-2">Notas (opcional)</label>
+            <textarea
+              value={datos.notas}
+              onChange={(e) => setDatos({ ...datos, notas: e.target.value })}
+              rows={3}
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg 
+                       text-gray-200 focus:border-tincho-gold focus:ring-2 focus:ring-tincho-gold/50"
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="sticky bottom-0 bg-gray-900 border-t border-gray-700 p-6 flex justify-between">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 
+                     rounded-lg transition-colors"
+          >
+            Cancelar
+          </button>
+
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="px-6 py-2 bg-oro-base hover:bg-oro-brillo text-tincho-dark 
+                     font-bold rounded-lg transition-colors disabled:opacity-50 
+                     disabled:cursor-not-allowed"
+          >
+            {loading ? 'Guardando...' : 'Guardar Cambios'}
+          </button>
         </div>
       </div>
     </div>

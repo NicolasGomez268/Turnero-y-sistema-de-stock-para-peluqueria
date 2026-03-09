@@ -12,6 +12,8 @@ from .admin_views import (
     marcar_turno_realizado,
     cancelar_turno,
     crear_turno_manual,
+    eliminar_turno,
+    editar_turno,
 )
 from .liquidacion_views import (
     liquidacion_semanal,
@@ -49,6 +51,8 @@ urlpatterns = [
     path('admin/turnos/semanales/', get_turnos_semanales, name='admin-turnos-semanales'),
     path('admin/turnos/<int:turno_id>/marcar-realizado/', marcar_turno_realizado, name='admin-marcar-realizado'),
     path('admin/turnos/<int:turno_id>/cancelar/', cancelar_turno, name='admin-cancelar-turno'),
+    path('admin/turnos/<int:turno_id>/eliminar/', eliminar_turno, name='admin-eliminar-turno'),
+    path('admin/turnos/<int:turno_id>/editar/', editar_turno, name='admin-editar-turno'),
         
     # Liquidación y Caja
     path('admin/liquidacion/', liquidacion_semanal, name='admin-liquidacion'),
