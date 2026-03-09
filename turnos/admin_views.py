@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import authenticate
 from django.utils import timezone
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from datetime import datetime, timedelta
 from rest_framework.authtoken.models import Token
 from .models import Turno, Barbero, Servicio, EstadoTurno
@@ -256,13 +256,12 @@ def crear_turno_manual(request):
     print(f"  cliente_nombre: '{cliente_nombre}' (tipo: {type(cliente_nombre)})")
     print(f"  cliente_telefono: '{cliente_telefono}' (tipo: {type(cliente_telefono)})")
     
-    # Validar campos requeridos
-    if not all([barbero_id, servicio_id, fecha_str, hora_str, cliente_nombre, cliente_telefono]):
+    # Validar campos requeridos (hora es OPCIONAL)
+    if not all([barbero_id, servicio_id, fecha_str, cliente_nombre, cliente_telefono]):
         campos_vacios = []
         if not barbero_id: campos_vacios.append('barbero_id')
         if not servicio_id: campos_vacios.append('servicio_id')
         if not fecha_str: campos_vacios.append('fecha')
-        if not hora_str: campos_vacios.append('hora')
         if not cliente_nombre: campos_vacios.append('cliente_nombre')
         if not cliente_telefono: campos_vacios.append('cliente_telefono')
         print(f"DEBUG - Campos vacíos: {campos_vacios}")
@@ -271,12 +270,12 @@ def crear_turno_manual(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # Validar y obtener barbero
+    # Validar y obtener barbero (ahora permitimos inactivos para registro manual)
     try:
-        barbero = Barbero.objects.get(id=barbero_id, is_active=True)
+        barbero = Barbero.objects.get(id=barbero_id)
     except Barbero.DoesNotExist:
         return Response(
-            {'error': 'Barbero no encontrado o inactivo'},
+            {'error': 'Barbero no encontrado'},
             status=status.HTTP_404_NOT_FOUND
         )
     
@@ -289,16 +288,22 @@ def crear_turno_manual(request):
             status=status.HTTP_404_NOT_FOUND
         )
     
-    # Parsear fecha y hora
+    # Parsear fecha y hora (hora opcional)
     try:
         print(f"DEBUG - Parseando fecha: '{fecha_str}' y hora: '{hora_str}'")
         fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
         
-        # Intentar primero con segundos (HH:MM:SS), luego sin segundos (HH:MM)
-        try:
-            hora = datetime.strptime(hora_str, '%H:%M:%S').time()
-        except ValueError:
-            hora = datetime.strptime(hora_str, '%H:%M').time()
+        # Si no se proporciona hora, usar 12:00 (mediodía) como valor por defecto
+        if not hora_str or hora_str == '':
+            from datetime import time
+            hora = time(12, 0, 0)  # 12:00:00 por defecto para turnos walk-in sin hora específica
+            print(f"DEBUG - Hora no proporcionada, usando por defecto: {hora}")
+        else:
+            # Intentar primero con segundos (HH:MM:SS), luego sin segundos (HH:MM)
+            try:
+                hora = datetime.strptime(hora_str, '%H:%M:%S').time()
+            except ValueError:
+                hora = datetime.strptime(hora_str, '%H:%M').time()
             
         print(f"DEBUG - Fecha parseada: {fecha}, Hora parseada: {hora}")
     except ValueError as e:
@@ -308,19 +313,20 @@ def crear_turno_manual(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # Verificar si el slot está disponible (opcional, puede omitirse para walk-ins)
-    turno_existente = Turno.objects.filter(
-        barbero=barbero,
-        fecha=fecha,
-        hora=hora,
-        estado=EstadoTurno.PENDIENTE
-    ).exists()
-    
-    if turno_existente:
-        return Response(
-            {'error': 'Ya existe un turno para este barbero en ese horario. ¿Desea crearlo de todas formas?'},
-            status=status.HTTP_409_CONFLICT
-        )
+    # Verificar conflictos solo si se especificó una hora concreta
+    if hora_str:  # Solo verificar si el usuario proporcionó hora explícita
+        turno_existente = Turno.objects.filter(
+            barbero=barbero,
+            fecha=fecha,
+            hora=hora,
+            estado=EstadoTurno.PENDIENTE
+        ).exists()
+        
+        if turno_existente:
+            return Response(
+                {'error': 'Ya existe un turno para este barbero en ese horario'},
+                status=status.HTTP_409_CONFLICT
+            )
     
     # Crear el turno con estado PENDIENTE
     try:

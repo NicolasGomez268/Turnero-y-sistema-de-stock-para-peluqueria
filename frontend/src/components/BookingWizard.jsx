@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
+import pushNotifications from '../services/pushNotifications';
 
 /**
  * BookingWizard - Componente de reserva de turnos en 5 pasos
@@ -82,7 +83,8 @@ const BookingWizard = () => {
     setError(null);
     try {
       const data = await api.getBarberos();
-      setBarberos(data);
+      // En vista pública, filtrar solo barberos activos
+      setBarberos(data.filter(b => b.is_active));
     } catch (err) {
       setError('Error al cargar los barberos. Por favor, intenta nuevamente.');
       console.error(err);
@@ -146,8 +148,26 @@ const BookingWizard = () => {
 
       console.log('Payload enviado:', payload);
 
-      await api.reservarTurno(payload);
+      const turnoCreado = await api.reservarTurno(payload);
       setSuccess(true);
+      
+      // Pedir permiso para notificaciones push
+      setTimeout(async () => {
+        if (pushNotifications.isNotificationSupported() && 
+            pushNotifications.getPermissionStatus() !== 'granted') {
+          const permiso = await pushNotifications.requestPermission();
+          if (permiso) {
+            // Enviar notificación de confirmación
+            await pushNotifications.notificarConfirmacion({
+              id: turnoCreado?.id || Math.random(),
+              cliente_nombre: reserva.clienteNombre,
+              fecha: formatearFecha(reserva.fecha),
+              hora: reserva.horario.substring(0, 5),
+              barbero_nombre: reserva.barberoNombre
+            });
+          }
+        }
+      }, 1000);
       
       // No auto-resetear, esperar a que el usuario haga click en "Hacer otra reserva"
     } catch (err) {
@@ -157,6 +177,14 @@ const BookingWizard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  /**
+   * Formatear fecha de YYYY-MM-DD a DD/MM/YYYY
+   */
+  const formatearFecha = (fecha) => {
+    const [year, month, day] = fecha.split('-');
+    return `${day}/${month}/${year}`;
   };
 
   /**
@@ -332,7 +360,7 @@ const BookingWizard = () => {
           <p className="mt-4 text-sm text-gray-400">Cargando barberos...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-4">
           {barberos.map((barbero) => (
             <button
               key={barbero.id}
@@ -344,24 +372,40 @@ const BookingWizard = () => {
                 });
                 siguientePaso();
               }}
-              className="bg-gray-900 border border-gray-700 hover:border-oro-brillo p-5 
-                         transition-all duration-200 text-left cursor-pointer rounded-lg"
+              className="bg-gradient-to-r from-gray-900 to-gray-800 border-2 border-gray-700 
+                         hover:border-oro-brillo hover:shadow-lg hover:shadow-oro-brillo/20
+                         p-6 transition-all duration-300 text-left cursor-pointer rounded-xl
+                         transform hover:scale-[1.02]"
             >
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-lg 
-                                font-semibold text-oro-brillo">
-                  {barbero.nombre.charAt(0)}
-                </div>
+              <div className="flex items-center space-x-5">
+                {barbero.foto ? (
+                  <img
+                    src={barbero.foto}
+                    alt={barbero.nombre}
+                    className="w-20 h-20 rounded-full object-cover border-3 border-oro-brillo/50
+                               shadow-lg shadow-black/50"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 
+                                  flex items-center justify-center text-2xl font-bold text-oro-brillo 
+                                  border-3 border-oro-brillo/50 shadow-lg shadow-black/50">
+                    {barbero.nombre.charAt(0)}
+                  </div>
+                )}
                 
                 <div className="flex-1">
-                  <h3 className="text-base font-semibold text-white">
+                  <h3 className="text-lg font-bold text-white mb-1">
                     {barbero.nombre}
                   </h3>
                   {barbero.especialidad && (
-                    <p className="text-sm text-gray-400 mt-0.5">
+                    <p className="text-sm text-gray-300">
                       {barbero.especialidad}
                     </p>
                   )}
+                </div>
+                
+                <div className="text-oro-brillo text-xl">
+                  ›
                 </div>
               </div>
             </button>

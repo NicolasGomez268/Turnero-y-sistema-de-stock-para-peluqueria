@@ -42,6 +42,9 @@ class DisponibilidadView(APIView):
         barbero_id = serializer.validated_data['barbero_id']
         servicio_id = serializer.validated_data.get('servicio_id')
         
+        # Parámetro para permitir horarios pasados (para admin)
+        permitir_pasados = request.query_params.get('permitir_pasados', 'false').lower() == 'true'
+        
         # Obtener barbero
         try:
             barbero = Barbero.objects.get(id=barbero_id)
@@ -70,41 +73,21 @@ class DisponibilidadView(APIView):
         dia_semana = fecha.weekday()
         
         # Buscar el horario de atención del barbero para ese día
+        horario = None
         try:
             horario = HorarioAtencion.objects.get(
                 barbero_id=barbero_id,
                 dia_semana=dia_semana
             )
         except HorarioAtencion.DoesNotExist:
-            # El barbero no trabaja ese día (franco)
-            return Response(
-                {
-                    'fecha': fecha,
-                    'barbero': barbero.nombre,
-                    'barbero_id': barbero.id,
-                    'servicio': servicio_nombre,
-                    'duracion_servicio': duracion_minutos,
-                    'total_slots': 0,
-                    'slots_disponibles': 0,
-                    'slots_ocupados': 0,
-                    'horarios': [],
-                    'mensaje': f'{barbero.nombre} no tiene horario configurado para este día'
-                },
-                status=status.HTTP_200_OK
-            )
-        
-        # Generar todos los slots posibles según el horario del barbero
-        slots = self._generar_slots_horario_personalizado(horario)
-        
-        # FILTRAR SLOTS PASADOS SI LA FECHA ES HOY
-        # Usar localtime() para comparar con la hora argentina, no UTC
-        ahora_local = timezone.localtime()
-        fecha_actual = ahora_local.date()
-        hora_actual = ahora_local.time()
-
-        if fecha == fecha_actual:
-            # Filtrar slots cuya hora de inicio ya pasó
-            slots = [slot for slot in slots if slot['hora'] > hora_actual]
+            # Si no tiene horario configurado, usar horario por defecto (9:00 - 20:00)
+            # Esto permite registrar turnos para barberos inactivos/walk-in
+            class HorarioDefault:
+                hora_inicio = time(9, 0)
+                hora_fin = time(20, 0)
+                descanso_inicio = None
+                descanso_fin = None
+            horario = HorarioDefault()
         
         # Obtener los turnos ya ocupados para ese día y barbero
         # Solo contamos PENDIENTE porque REALIZADO ya pasó y no afecta disponibilidad
@@ -114,10 +97,17 @@ class DisponibilidadView(APIView):
             estado=EstadoTurno.PENDIENTE
         ).select_related('servicio')
         
-        # Marcar slots ocupados
-        slots_con_disponibilidad = self._marcar_slots_ocupados(
-            slots, 
-            turnos_ocupados
+        # FILTRAR SLOTS PASADOS SI LA FECHA ES HOY (a menos que permitir_pasados sea True)
+        ahora_local = timezone.localtime()
+        fecha_actual = ahora_local.date()
+        hora_minima = ahora_local.time() if (fecha == fecha_actual and not permitir_pasados) else None
+        
+        # Generar slots dinámicos aprovechando espacios libres
+        slots_con_disponibilidad = self._generar_slots_dinamicos(
+            horario, 
+            duracion_minutos, 
+            turnos_ocupados,
+            hora_minima
         )
         
         # Calcular estadísticas
@@ -140,19 +130,137 @@ class DisponibilidadView(APIView):
         
         return Response(response_data, status=status.HTTP_200_OK)
     
-    def _generar_slots_horario_personalizado(self, horario):
+    def _generar_slots_dinamicos(self, horario, duracion_servicio, turnos_ocupados, hora_minima=None):
+        """
+        Genera slots cada 1 hora, ajustándose dinámicamente cuando encuentra turnos ocupados.
+        
+        Lógica:
+        - Empieza generando slots cada hora desde el inicio (9:00, 10:00, 11:00...)
+        - Si un slot cae en un horario ocupado, se mueve al final de ese turno
+        - Los slots siguientes se generan cada hora desde ese nuevo punto
+        
+        Ejemplo:
+        - Sin turnos: 9:00, 10:00, 11:00, 12:00...
+        - Turno en 10:00-10:20 → Slots: 9:00, 10:20, 11:20, 12:20...
+        - Turno en 10:20-11:05 → Slots: 9:00, 11:05, 12:05, 13:05...
+        
+        Args:
+            horario (HorarioAtencion): Horario configurado para el barbero
+            duracion_servicio (int): Duración del servicio en minutos
+            turnos_ocupados (QuerySet): Turnos ya reservados
+            hora_minima (time): Hora mínima para filtrar (si es hoy)
+            
+        Returns:
+            list: Slots disponibles con ajuste dinámico
+        """
+        fecha_base = datetime(2000, 1, 1)
+        
+        # 1. Construir rangos ocupados ordenados
+        rangos_ocupados = []
+        for turno in turnos_ocupados:
+            hora_inicio_dt = datetime.combine(fecha_base, turno.hora)
+            duracion_turno = turno.servicio.duracion_minutos
+            hora_fin_dt = hora_inicio_dt + timedelta(minutes=duracion_turno)
+            rangos_ocupados.append({
+                'inicio': hora_inicio_dt,
+                'fin': hora_fin_dt
+            })
+        rangos_ocupados.sort(key=lambda x: x['inicio'])
+        
+        # 2. Obtener rangos de trabajo del barbero
+        rangos_trabajo = []
+        if horario.descanso_inicio and horario.descanso_fin:
+            rangos_trabajo.append({
+                'inicio': datetime.combine(fecha_base, horario.hora_inicio),
+                'fin': datetime.combine(fecha_base, horario.descanso_inicio)
+            })
+            rangos_trabajo.append({
+                'inicio': datetime.combine(fecha_base, horario.descanso_fin),
+                'fin': datetime.combine(fecha_base, horario.hora_fin)
+            })
+        else:
+            rangos_trabajo.append({
+                'inicio': datetime.combine(fecha_base, horario.hora_inicio),
+                'fin': datetime.combine(fecha_base, horario.hora_fin)
+            })
+        
+        # 3. Generar slots con ajuste dinámico
+        slots = []
+        
+        for rango_trabajo in rangos_trabajo:
+            hora_actual = rango_trabajo['inicio']
+            
+            while hora_actual < rango_trabajo['fin']:
+                hora_fin_slot = hora_actual + timedelta(minutes=duracion_servicio)
+                
+                # Verificar que el slot completo cabe en el rango de trabajo
+                if hora_fin_slot > rango_trabajo['fin']:
+                    break  # No cabe, salir del loop
+                
+                # Verificar si hay conflicto con algún turno ocupado
+                conflicto_rango = None
+                for rango in rangos_ocupados:
+                    if hora_actual < rango['fin'] and hora_fin_slot > rango['inicio']:
+                        conflicto_rango = rango
+                        break
+                
+                if conflicto_rango:
+                    # HAY CONFLICTO: saltar al final del turno ocupado
+                    hora_actual = conflicto_rango['fin']
+                    # No agregar este slot, continuar con el siguiente
+                else:
+                    # NO HAY CONFLICTO: agregar el slot como disponible
+                    disponible = True
+                    
+                    # Filtrar por hora mínima si aplica
+                    if hora_minima and hora_actual.time() <= hora_minima:
+                        disponible = False
+                    
+                    slots.append({
+                        'hora': hora_actual.time(),
+                        'hora_fin': hora_fin_slot.time(),
+                        'disponible': disponible
+                    })
+                    
+                    # Avanzar 1 hora para el próximo slot
+                    hora_actual += timedelta(hours=1)
+        
+        return slots
+    
+    def _hay_conflicto_con_rangos(self, slot_inicio, slot_fin, rangos_ocupados):
+        """
+        Verifica si un slot se superpone con algún rango ocupado.
+        
+        Args:
+            slot_inicio (datetime): Inicio del slot
+            slot_fin (datetime): Fin del slot
+            rangos_ocupados (list): Lista de rangos ocupados
+            
+        Returns:
+            bool: True si hay conflicto
+        """
+        for rango in rangos_ocupados:
+            # Hay superposición si:
+            # - El slot comienza antes de que termine el turno ocupado
+            # - El slot termina después de que comience el turno ocupado
+            if slot_inicio < rango['fin'] and slot_fin > rango['inicio']:
+                return True
+        
+        return False
+    
+    def _generar_slots_horario_personalizado(self, horario, duracion_minutos):
         """
         Genera slots de tiempo basados en el horario personalizado del barbero.
         Soporta horarios con descanso intermedio (ej: 9-13 y 16-21).
         
         Args:
             horario (HorarioAtencion): Horario configurado para el barbero
+            duracion_minutos (int): Duración del servicio en minutos
             
         Returns:
-            list: Lista de diccionarios con 'hora' y 'hora_fin' (slots de 60 minutos)
+            list: Lista de diccionarios con 'hora' y 'hora_fin'
         """
         slots = []
-        duracion_minutos = 60  # Siempre 60 minutos (1 hora)
         
         # Si hay descanso, generar slots en dos rangos
         if horario.descanso_inicio and horario.descanso_fin:

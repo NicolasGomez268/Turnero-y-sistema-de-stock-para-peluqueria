@@ -1,4 +1,5 @@
 from django.urls import path, include
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.routers import DefaultRouter
 from .views import BarberoViewSet, ServicioViewSet, TurnoViewSet
 from .disponibilidad_views import DisponibilidadView
@@ -42,7 +43,7 @@ urlpatterns = [
     path('liquidacion/', LiquidacionView.as_view(), name='liquidacion'),
     
     # Panel Admin React
-    path('admin/login/', admin_login, name='admin-login'),
+    path('admin/login/', csrf_exempt(admin_login), name='admin-login'),
     path('admin/turnos/', get_turnos_fecha, name='admin-turnos'),
     path('admin/turnos/manual/', crear_turno_manual, name='admin-crear-turno-manual'),
     path('admin/turnos/semanales/', get_turnos_semanales, name='admin-turnos-semanales'),

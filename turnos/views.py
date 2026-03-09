@@ -64,7 +64,7 @@ class ServicioViewSet(viewsets.ModelViewSet):
         Si tiene turnos, devuelve error 400 con mensaje descriptivo.
         """
         servicio = self.get_object()
-        turnos_count = servicio.turnos_servicio.count()
+        turnos_count = servicio.turnos.count()
         
         if turnos_count > 0:
             return Response(

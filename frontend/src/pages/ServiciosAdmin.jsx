@@ -100,10 +100,11 @@ export default function ServiciosAdmin() {
       // Si el backend devuelve un mensaje estructurado
       if (error.response?.data?.mensaje) {
         const data = error.response.data;
-        notification.error(`❌ ${data.error}\n\n${data.mensaje}\n\n💡 ${data.sugerencia}`);
+        const mensaje = `No se puede eliminar "${servicio?.nombre}" porque tiene ${data.turnos_count} turno(s) asociado(s).\n\n💡 Desactívalo en su lugar para mantener el historial.`;
+        notification.error(mensaje);
       } else {
         // Mensaje genérico
-        notification.error('❌ Error al eliminar el servicio. Puede que tenga turnos asociados.\n\n💡 Intenta desactivarlo en lugar de eliminarlo.');
+        notification.error('Error al eliminar. El servicio puede tener turnos asociados.\n\n💡 Intenta desactivarlo en su lugar.');
       }
     }
   };
