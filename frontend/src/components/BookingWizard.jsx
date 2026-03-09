@@ -83,7 +83,8 @@ const BookingWizard = () => {
     setError(null);
     try {
       const data = await api.getBarberos();
-      setBarberos(data);
+      // En vista pública, filtrar solo barberos activos
+      setBarberos(data.filter(b => b.is_active));
     } catch (err) {
       setError('Error al cargar los barberos. Por favor, intenta nuevamente.');
       console.error(err);

@@ -19,17 +19,15 @@ class DisponibilidadRequestSerializer(serializers.Serializer):
     )
     
     def validate_fecha(self, value):
-        """Validar que la fecha no sea en el pasado"""
-        if value < datetime.now().date():
-            raise serializers.ValidationError("No se pueden reservar turnos en fechas pasadas")
+        """Validar que la fecha no sea en el pasado (excepto para admin)"""
+        # No validar fechas pasadas - se controla con permitir_pasados en la vista
         return value
     
     def validate_barbero_id(self, value):
-        """Validar que el barbero existe y está activo"""
+        """Validar que el barbero existe (permitir inactivos para admin)"""
         try:
             barbero = Barbero.objects.get(id=value)
-            if not barbero.is_active:
-                raise serializers.ValidationError("El barbero no está disponible actualmente")
+            # Permitir barberos inactivos - el admin puede agendar turnos walk-in
         except Barbero.DoesNotExist:
             raise serializers.ValidationError("El barbero especificado no existe")
         return value

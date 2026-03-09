@@ -29,18 +29,16 @@ apiClient.interceptors.request.use((config) => {
  */
 const api = {
   /**
-   * Obtener todos los barberos activos
+   * Obtener todos los barberos
    * GET /api/barberos/
+   * Por defecto devuelve solo activos, pero el backend soporta ?active=false
    */
   getBarberos: async () => {
     try {
       const response = await apiClient.get('/barberos/');
       // Manejar respuesta paginada o array directo
       const barberos = response.data.results || response.data;
-      // Filtrar solo barberos activos
-      return Array.isArray(barberos) 
-        ? barberos.filter(barbero => barbero.is_active)
-        : [];
+      return Array.isArray(barberos) ? barberos : [];
     } catch (error) {
       console.error('Error al obtener barberos:', error);
       throw error;
@@ -68,8 +66,9 @@ const api = {
    * @param {string} fecha - Fecha en formato YYYY-MM-DD
    * @param {number} barberoId - ID del barbero
    * @param {number} servicioId - ID del servicio (opcional)
+   * @param {boolean} permitirPasados - Si true, incluye horarios pasados (para admin)
    */
-  getDisponibilidad: async (fecha, barberoId, servicioId = null) => {
+  getDisponibilidad: async (fecha, barberoId, servicioId = null, permitirPasados = false) => {
     try {
       const params = {
         fecha,
@@ -78,6 +77,10 @@ const api = {
       
       if (servicioId) {
         params.servicio_id = servicioId;
+      }
+      
+      if (permitirPasados) {
+        params.permitir_pasados = 'true';
       }
 
       const response = await apiClient.get('/disponibilidad/', { params });

@@ -386,7 +386,8 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
   const cargarBarberos = async () => {
     try {
       const data = await api.getBarberos();
-      setBarberos(data.filter(b => b.is_active));
+      // NO filtrar barberos inactivos - mostrar todos para permitir registrar turnos manuales
+      setBarberos(data);
     } catch (error) {
       notification.error('Error al cargar barberos');
     }
@@ -427,7 +428,8 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
       const response = await api.getDisponibilidad(
         datos.fecha,
         datos.barbero.id,
-        datos.servicio.id
+        datos.servicio.id,
+        true // permitir_pasados = true para el admin
       );
       
       // El backend devuelve "horarios" (array de slots), no "slots_disponibles" (que es un contador)
@@ -443,15 +445,21 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      await api.createTurnoManual({
+      const turnoData = {
         barbero_id: datos.barbero.id,
         servicio_id: datos.servicio.id,
         fecha: datos.fecha,
-        hora: datos.hora,
         cliente_nombre: datos.cliente_nombre,
         cliente_telefono: datos.cliente_telefono,
         notas: datos.notas
-      });
+      };
+      
+      // Solo agregar hora si se seleccionó
+      if (datos.hora) {
+        turnoData.hora = datos.hora;
+      }
+      
+      await api.createTurnoManual(turnoData);
       
       notification.success('✅ Turno creado exitosamente');
       onSuccess();
@@ -466,7 +474,7 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
     switch (paso) {
       case 1: return datos.barbero !== null;
       case 2: return datos.servicio !== null;
-      case 3: return datos.hora !== '';
+      case 3: return datos.fecha !== ''; // Solo requiere fecha, hora es opcional
       case 4: return datos.cliente_nombre && datos.cliente_telefono;
       default: return false;
     }
@@ -522,7 +530,8 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
                     className={`p-4 rounded-lg border-2 cursor-pointer transition-all
                               ${datos.barbero?.id === barbero.id 
                                 ? 'border-tincho-gold bg-tincho-gold/10' 
-                                : 'border-gray-700 hover:border-gray-600 bg-gray-800'}`}
+                                : 'border-gray-700 hover:border-gray-600 bg-gray-800'}
+                              ${!barbero.is_active ? 'opacity-60' : ''}`}
                   >
                     <div className="flex items-center gap-3">
                       {barbero.foto ? (
@@ -533,8 +542,15 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
                           💈
                         </div>
                       )}
-                      <div>
-                        <p className="font-bold text-white">{barbero.nombre}</p>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-white">{barbero.nombre}</p>
+                          {!barbero.is_active && (
+                            <span className="text-xs px-2 py-0.5 bg-gray-600 text-gray-300 rounded">
+                              Inactivo
+                            </span>
+                          )}
+                        </div>
                         {barbero.especialidad && (
                           <p className="text-xs text-gray-400">{barbero.especialidad}</p>
                         )}
@@ -594,29 +610,49 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
 
               {/* Slots Disponibles */}
               <div>
-                <label className="block text-gray-400 mb-2">Hora disponible</label>
+                <label className="block text-gray-400 mb-2">Hora (opcional para turnos walk-in)</label>
                 {!Array.isArray(slotsDisponibles) || slotsDisponibles.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">
-                    No hay horarios disponibles para esta fecha
-                  </p>
+                  <div className="text-center py-6">
+                    <p className="text-gray-500 mb-4">
+                      No hay horarios disponibles para esta fecha
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setDatos({ ...datos, hora: '' })}
+                      className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
+                    >
+                      Continuar sin horario específico
+                    </button>
+                  </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-60 overflow-y-auto">
-                    {slotsDisponibles.map((slot, index) => (
+                  <div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-60 overflow-y-auto mb-3">
+                      {slotsDisponibles.map((slot, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => setDatos({ ...datos, hora: slot.hora })}
+                          disabled={!slot.disponible}
+                          className={`px-4 py-2 rounded-lg font-semibold transition-all
+                                    ${datos.hora === slot.hora 
+                                      ? 'bg-tincho-gold text-tincho-dark' 
+                                      : slot.disponible
+                                        ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-600'
+                                        : 'bg-gray-900 text-gray-600 border border-gray-800 cursor-not-allowed'}`}
+                        >
+                          {slot.hora ? String(slot.hora).slice(0, 5) : 'N/A'}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="text-center pt-3 border-t border-gray-700">
                       <button
-                        key={index}
                         type="button"
-                        onClick={() => setDatos({ ...datos, hora: slot.hora })}
-                        disabled={!slot.disponible}
-                        className={`px-4 py-2 rounded-lg font-semibold transition-all
-                                  ${datos.hora === slot.hora 
-                                    ? 'bg-tincho-gold text-tincho-dark' 
-                                    : slot.disponible
-                                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-600'
-                                      : 'bg-gray-900 text-gray-600 border border-gray-800 cursor-not-allowed'}`}
+                        onClick={() => setDatos({ ...datos, hora: '' })}
+                        className="text-sm text-gray-400 hover:text-gray-300 underline"
                       >
-                        {slot.hora ? String(slot.hora).slice(0, 5) : 'N/A'}
+                        O continuar sin horario específico
                       </button>
-                    ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -646,7 +682,7 @@ const NuevoTurnoModal = ({ onClose, onSuccess }) => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Hora:</span>
-                    <span className="text-white font-semibold">{datos.hora}</span>
+                    <span className="text-white font-semibold">{datos.hora || 'Sin horario específico'}</span>
                   </div>
                   <div className="flex justify-between pt-2 border-t border-gray-700">
                     <span className="text-gray-400">Total:</span>

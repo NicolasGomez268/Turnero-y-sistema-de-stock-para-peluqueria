@@ -42,6 +42,9 @@ class DisponibilidadView(APIView):
         barbero_id = serializer.validated_data['barbero_id']
         servicio_id = serializer.validated_data.get('servicio_id')
         
+        # Parámetro para permitir horarios pasados (para admin)
+        permitir_pasados = request.query_params.get('permitir_pasados', 'false').lower() == 'true'
+        
         # Obtener barbero
         try:
             barbero = Barbero.objects.get(id=barbero_id)
@@ -70,28 +73,21 @@ class DisponibilidadView(APIView):
         dia_semana = fecha.weekday()
         
         # Buscar el horario de atención del barbero para ese día
+        horario = None
         try:
             horario = HorarioAtencion.objects.get(
                 barbero_id=barbero_id,
                 dia_semana=dia_semana
             )
         except HorarioAtencion.DoesNotExist:
-            # El barbero no trabaja ese día (franco)
-            return Response(
-                {
-                    'fecha': fecha,
-                    'barbero': barbero.nombre,
-                    'barbero_id': barbero.id,
-                    'servicio': servicio_nombre,
-                    'duracion_servicio': duracion_minutos,
-                    'total_slots': 0,
-                    'slots_disponibles': 0,
-                    'slots_ocupados': 0,
-                    'horarios': [],
-                    'mensaje': f'{barbero.nombre} no tiene horario configurado para este día'
-                },
-                status=status.HTTP_200_OK
-            )
+            # Si no tiene horario configurado, usar horario por defecto (9:00 - 20:00)
+            # Esto permite registrar turnos para barberos inactivos/walk-in
+            class HorarioDefault:
+                hora_inicio = time(9, 0)
+                hora_fin = time(20, 0)
+                descanso_inicio = None
+                descanso_fin = None
+            horario = HorarioDefault()
         
         # Obtener los turnos ya ocupados para ese día y barbero
         # Solo contamos PENDIENTE porque REALIZADO ya pasó y no afecta disponibilidad
@@ -101,10 +97,10 @@ class DisponibilidadView(APIView):
             estado=EstadoTurno.PENDIENTE
         ).select_related('servicio')
         
-        # FILTRAR SLOTS PASADOS SI LA FECHA ES HOY
+        # FILTRAR SLOTS PASADOS SI LA FECHA ES HOY (a menos que permitir_pasados sea True)
         ahora_local = timezone.localtime()
         fecha_actual = ahora_local.date()
-        hora_minima = ahora_local.time() if fecha == fecha_actual else None
+        hora_minima = ahora_local.time() if (fecha == fecha_actual and not permitir_pasados) else None
         
         # Generar slots dinámicos aprovechando espacios libres
         slots_con_disponibilidad = self._generar_slots_dinamicos(
