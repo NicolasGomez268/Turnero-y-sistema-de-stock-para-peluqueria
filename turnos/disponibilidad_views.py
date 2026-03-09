@@ -100,7 +100,14 @@ class DisponibilidadView(APIView):
         # FILTRAR SLOTS PASADOS SI LA FECHA ES HOY (a menos que permitir_pasados sea True)
         ahora_local = timezone.localtime()
         fecha_actual = ahora_local.date()
-        hora_minima = ahora_local.time() if (fecha == fecha_actual and not permitir_pasados) else None
+        
+        # Para fechas pasadas O si permite pasados, mostrar todos los horarios
+        if permitir_pasados or fecha < fecha_actual:
+            hora_minima = None  # Sin filtro de hora
+        elif fecha == fecha_actual:
+            hora_minima = ahora_local.time()  # Solo filtrar si es hoy
+        else:
+            hora_minima = None  # Fechas futuras sin filtro
         
         # Generar slots dinámicos aprovechando espacios libres
         slots_con_disponibilidad = self._generar_slots_dinamicos(
