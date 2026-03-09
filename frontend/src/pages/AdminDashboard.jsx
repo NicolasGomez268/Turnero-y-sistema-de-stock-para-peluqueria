@@ -869,7 +869,13 @@ const EditarTurnoModal = ({ turno, onClose, onSuccess }) => {
 
     setLoading(true);
     try {
-      await api.editarTurno(turno.id, datos);
+      // Asegurar que la hora esté en formato HH:MM (sin segundos)
+      const datosEnviar = { ...datos };
+      if (datosEnviar.hora && datosEnviar.hora.length > 5) {
+        datosEnviar.hora = datosEnviar.hora.substring(0, 5); // "09:00:00" -> "09:00"
+      }
+      
+      await api.editarTurno(turno.id, datosEnviar);
       notification.success('✅ Turno actualizado exitosamente');
       onSuccess();
     } catch (error) {
